@@ -1,1 +1,1 @@
-{"rewrites":[{"source":"/og-image.jpg","destination":"/image.jpg"}]}
+{"rewrites":[{"source":"/og-image.jpg","destination":"/image.jpg"},{"source":"/","has":[{"type":"header","key":"user-agent","value":".*(LinkedInBot|facebookexternalhit|Twitterbot|Slackbot|WhatsApp|TelegramBot|Discordbot|redditbot|Embedly|Pinterest|SkypeUriPreview).*"}],"destination":"/share.html"}]}
