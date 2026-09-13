@@ -280,6 +280,8 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
 .button.secondary { border-color: #cfd5de; background: #fff; color: var(--ink); }
 .button.secondary:hover { border-color: var(--blue); color: var(--blue); }
 .button.light { background: #fff; color: var(--ink); }
+.button.dark { background: var(--navy); color: #fff; }
+.button.dark:hover { background: #0c1626; }
 
 /* --------------------------- Product frame ----------------------------- */
 /* Solid surface — no backdrop blur, no translucency. */
@@ -644,8 +646,91 @@ section { padding: 110px 0; }
   letter-spacing: -.045em;
   line-height: 1.03;
 }
-.contact-box p { position: relative; z-index: 1; max-width: 610px; margin: 0 0 29px; color: #e8f1ff; font-size: 17px; }
+/* Scoped to the copy column: the form panel sits inside .contact-box too,
+   and its hints and errors must not inherit panel-on-blue colouring. */
+.contact-copy p { position: relative; z-index: 1; max-width: 610px; margin: 0 0 29px; color: #e8f1ff; font-size: 17px; }
+.contact-copy p:last-child { margin-bottom: 0; }
 .contact-box .button { position: relative; z-index: 1; }
+
+/* ---------------------------- Enquiry form ----------------------------- */
+/* A white panel on the blue field. Same surfaces and radii as the rest of
+   the page -- no blur, no translucency, nothing floating. */
+.contact-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 48px;
+  align-items: start;
+}
+.contact-copy h2 { margin-bottom: 18px; }
+
+.contact-alt { margin-top: 20px; font-size: 13px; color: #e8f1ff; }
+.contact-alt a { font-weight: 600; }
+
+.form-card {
+  padding: 30px;
+  border-radius: var(--radius-l);
+  background: #fff;
+  color: var(--ink);
+}
+/* The white outline used elsewhere on the blue panel would vanish here. */
+.form-card :focus-visible { outline-color: var(--blue); }
+
+.field { margin-bottom: 18px; }
+.field label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cfd8e6;
+  border-radius: var(--radius-m);
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.field textarea { min-height: 110px; resize: vertical; }
+.field input:hover,
+.field textarea:hover { border-color: #aebdd2; }
+.field input:focus,
+.field textarea:focus { border-color: var(--blue); }
+
+.field-hint { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+.field-error { margin: 7px 0 0; color: #b42318; font-size: 12px; font-weight: 500; }
+.field input[aria-invalid="true"],
+.field textarea[aria-invalid="true"] { border-color: #b42318; }
+
+.form-card .button {
+  width: 100%;
+  margin-top: 4px;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--sans);
+}
+.form-card .button[disabled] { opacity: .6; cursor: progress; transform: none; }
+
+.form-status { margin: 16px 0 0; font-size: 13px; line-height: 1.55; }
+.form-status:empty { display: none; }
+.form-status.ok { color: var(--green); font-weight: 600; }
+.form-status.bad { color: #b42318; }
+
+/* The honeypot. Off-screen rather than display:none, because some bots
+   skip hidden fields but not positioned ones. */
+.trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
 
 /* -------------------------------- Footer ------------------------------- */
 footer {
@@ -677,6 +762,7 @@ footer {
   .section-head { grid-template-columns: 1fr; gap: 13px; }
   .case-grid, .engagement { grid-template-columns: 1fr; }
   .service-grid { grid-template-columns: 1fr 1fr; }
+  .contact-grid { grid-template-columns: 1fr; gap: 34px; }
   .founder { grid-template-columns: 130px 1fr; }
   .founder img { width: 130px; }
   .founder .button { grid-column: 2; justify-self: start; }
@@ -723,6 +809,8 @@ footer {
   .price-row { grid-template-columns: 44px 1fr; }
   .price-row strong { grid-column: 2; text-align: left; }
   .offer, .contact-box { padding: 38px 25px; }
+  .contact-grid { grid-template-columns: 1fr; gap: 30px; }
+  .form-card { padding: 24px 20px; }
 
   .founder { grid-template-columns: 1fr; }
   .founder img { width: 100%; height: 260px; }

@@ -287,9 +287,44 @@
   <section class="contact" id="contact">
     <div class="shell">
       <div class="contact-box reveal">
-        <h2>What is your team still doing manually?</h2>
-        <p>Describe it in two or three sentences. I will tell you honestly whether it is worth turning into a system.</p>
-        <a class="button light" href="mailto:tobaina@gmail.com?subject=Something%20in%20my%20operation%20needs%20fixing">Tell me what is broken <span class="arrow" aria-hidden="true">&rarr;</span></a>
+        <div class="contact-grid">
+          <div class="contact-copy">
+            <h2>What is your team still doing manually?</h2>
+            <p>Describe it in two or three sentences. I will tell you honestly whether it is worth turning into a system, even when the answer is no.</p>
+            <p class="contact-alt">Prefer your own email? <a href="mailto:tobaina@gmail.com?subject=Something%20in%20my%20operation%20needs%20fixing">tobaina@gmail.com</a></p>
+          </div>
+
+          <form class="form-card" id="contact-form" method="post" action="/api/contact" novalidate>
+            <div class="field">
+              <label for="cf-name">Your name</label>
+              <input id="cf-name" name="name" type="text" autocomplete="name" maxlength="100" required aria-describedby="cf-name-error">
+              <p class="field-error" id="cf-name-error" hidden></p>
+            </div>
+
+            <div class="field">
+              <label for="cf-email">Email</label>
+              <input id="cf-email" name="email" type="email" autocomplete="email" maxlength="254" required aria-describedby="cf-email-error">
+              <p class="field-error" id="cf-email-error" hidden></p>
+            </div>
+
+            <div class="field">
+              <label for="cf-message">What is broken?</label>
+              <textarea id="cf-message" name="message" rows="4" maxlength="5000" required aria-describedby="cf-message-hint cf-message-error"></textarea>
+              <p class="field-hint" id="cf-message-hint">A couple of sentences is plenty.</p>
+              <p class="field-error" id="cf-message-error" hidden></p>
+            </div>
+
+            <!-- Left empty by people, filled in by bots. -->
+            <div class="trap" aria-hidden="true">
+              <label for="cf-company">Company</label>
+              <input id="cf-company" name="company" type="text" tabindex="-1" autocomplete="off">
+            </div>
+
+            <button class="button dark" type="submit" id="cf-submit">Send it to me</button>
+
+            <p class="form-status" id="cf-status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
       </div>
     </div>
   </section>

@@ -66,6 +66,118 @@
     });
   }
 
+  /* ---------------------------------------------------------- Enquiry form
+     Submits in the background so the visitor stays on the page. Without
+     JavaScript the form still posts normally, and the email address beside
+     it is always there as a fallback -- an enquiry should never depend on
+     one path working.
+  */
+  var form = document.getElementById("contact-form");
+
+  if (form) {
+    var status = document.getElementById("cf-status");
+    var submit = document.getElementById("cf-submit");
+    var fields = ["name", "email", "message"];
+
+    function showError(field, text) {
+      var input = document.getElementById("cf-" + field);
+      var slot = document.getElementById("cf-" + field + "-error");
+      if (!input || !slot) return;
+      if (text) {
+        slot.textContent = text;
+        slot.hidden = false;
+        input.setAttribute("aria-invalid", "true");
+      } else {
+        slot.textContent = "";
+        slot.hidden = true;
+        input.removeAttribute("aria-invalid");
+      }
+    }
+
+    function clearErrors() {
+      fields.forEach(function (field) { showError(field, ""); });
+    }
+
+    function setStatus(text, kind) {
+      status.textContent = text;
+      status.className = "form-status" + (kind ? " " + kind : "");
+    }
+
+    function validate(values) {
+      var errors = {};
+      if (!values.name) errors.name = "Please tell me your name.";
+      if (!values.email) errors.email = "Please add an email address so I can reply.";
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(values.email)) errors.email = "That email address does not look right.";
+      if (!values.message) errors.message = "Please describe what is happening.";
+      else if (values.message.length < 10) errors.message = "A sentence or two would help.";
+      return errors;
+    }
+
+    fields.forEach(function (field) {
+      var input = document.getElementById("cf-" + field);
+      if (input) input.addEventListener("input", function () { showError(field, ""); });
+    });
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      clearErrors();
+
+      var values = {
+        name: form.elements.name.value.trim(),
+        email: form.elements.email.value.trim(),
+        message: form.elements.message.value.trim(),
+        company: form.elements.company.value.trim()
+      };
+
+      var errors = validate(values);
+      var firstBad = fields.filter(function (f) { return errors[f]; })[0];
+
+      if (firstBad) {
+        fields.forEach(function (field) { showError(field, errors[field] || ""); });
+        setStatus("", "");
+        document.getElementById("cf-" + firstBad).focus();
+        return;
+      }
+
+      submit.disabled = true;
+      submit.textContent = "Sending\u2026";
+      setStatus("", "");
+
+      fetch(form.action, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values)
+      })
+        .then(function (response) {
+          return response.json().catch(function () { return {}; }).then(function (data) {
+            return { ok: response.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (result.ok && result.data.ok) {
+            form.reset();
+            setStatus("Thank you \u2014 that reached me. I reply to every message, usually the same day.", "ok");
+            return;
+          }
+          if (result.data.errors) {
+            fields.forEach(function (field) { showError(field, result.data.errors[field] || ""); });
+            var bad = fields.filter(function (f) { return result.data.errors[f]; })[0];
+            if (bad) document.getElementById("cf-" + bad).focus();
+            setStatus("", "");
+            return;
+          }
+          setStatus(result.data.error || "Something went wrong. Please email tobaina@gmail.com directly.", "bad");
+        })
+        .catch(function () {
+          setStatus("Something went wrong. Please email tobaina@gmail.com directly.", "bad");
+        })
+        .then(function () {
+          submit.disabled = false;
+          submit.textContent = "Send it to me";
+        });
+    });
+  }
+
   /* -------------------------------------------------------------- Reveal
      Progressive enhancement. The CSS hides .reveal blocks; if this script
      is blocked or IntersectionObserver is missing, everything is shown
