@@ -202,29 +202,70 @@
     });
   }
 
-  /* -------------------------------------------------------------- Reveal
-     Progressive enhancement. The CSS hides .reveal blocks; if this script
-     is blocked or IntersectionObserver is missing, everything is shown
-     immediately instead of staying invisible.
+  /* ---------------------------------------------------- In-page navigation
+     The nav links used to rely on CSS `scroll-behavior: smooth`. That
+     silently does nothing when the tab is not visible, and the browser can
+     abandon the animation part-way, so clicking Pricing changed the URL and
+     left the page where it was.
+
+     This does the scroll itself and then checks, 400ms later, that the page
+     actually moved. If it did not -- for any reason, in any browser -- it
+     jumps straight there. The link always works; smooth is only ever a
+     nicety layered on top.
   */
-  var revealables = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
-  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var inPageLinks = Array.prototype.slice.call(document.querySelectorAll('a[href^="#"]'));
 
-  if (!revealables.length) { return; }
-
-  if (reduced || typeof IntersectionObserver === "undefined") {
-    revealables.forEach(function (element) { element.classList.add("visible"); });
-    return;
+  function reducedMotion() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("visible");
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.08 });
+  function goTo(target, updateHash) {
+    if (!target) { return; }
 
-  revealables.forEach(function (element) { observer.observe(element); });
+    var before = window.pageYOffset;
+    var wanted = Math.round(target.getBoundingClientRect().top + before);
+
+    try {
+      target.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "start" });
+    } catch (error) {
+      target.scrollIntoView();            // very old browsers: no options object
+    }
+
+    // The guarantee. If nothing moved, put the page where it belongs.
+    window.setTimeout(function () {
+      if (Math.abs(window.pageYOffset - before) < 2 && Math.abs(wanted - before) > 2) {
+        window.scrollTo(0, wanted);
+      }
+    }, 400);
+
+    if (updateHash && target.id && window.history && window.history.pushState) {
+      window.history.pushState(null, "", "#" + target.id);
+    }
+
+    // Keyboard users must land in the section, not back at the top.
+    if (!target.hasAttribute("tabindex")) { target.setAttribute("tabindex", "-1"); }
+    target.focus({ preventScroll: true });
+  }
+
+  inPageLinks.forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      var id = link.getAttribute("href").slice(1);
+      if (!id) { return; }                                  // a bare "#"
+      var target = document.getElementById(id);
+      if (!target) { return; }                              // let the browser try
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) { return; }
+
+      event.preventDefault();
+      goTo(target, true);
+    });
+  });
+
+  // Arriving with a fragment already in the URL, e.g. a shared link.
+  if (window.location.hash.length > 1) {
+    var landing = document.getElementById(window.location.hash.slice(1));
+    if (landing) {
+      window.setTimeout(function () { goTo(landing, false); }, 60);
+    }
+  }
+
 }());

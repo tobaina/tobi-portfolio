@@ -69,7 +69,11 @@
 
 /* ------------------------------- Reset --------------------------------- */
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; font-family: var(--sans); }
+/* No scroll-behavior here on purpose. CSS smooth scrolling silently does
+   nothing in a tab that is not visible, and can be cancelled mid-flight --
+   which left the nav links changing the URL without moving the page.
+   main.js scrolls instead, and checks afterwards that it actually worked. */
+html { font-family: var(--sans); overflow-x: clip; }  /* clip, not hidden: clip does not create a scroll container */
 
 body {
   margin: 0;
@@ -79,7 +83,6 @@ body {
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;              /* belt and braces against overflow */
 }
 
 img { display: block; max-width: 100%; height: auto; }
@@ -747,10 +750,12 @@ footer {
 .footer-links a:hover { color: var(--blue); }
 
 /* ------------------------------- Reveal -------------------------------- */
-.reveal { opacity: 0; transform: translateY(15px); transition: opacity .6s, transform .6s; }
-.reveal.visible { opacity: 1; transform: none; }
-/* If JavaScript never runs, nothing may stay invisible. */
-.no-js .reveal { opacity: 1; transform: none; }
+/* Content is never hidden. An earlier version started these blocks at
+   opacity 0 and faded them in on scroll, which meant that anything which
+   did not run the observer -- a background tab, a screenshot, a link
+   preview, a fast scroll -- saw blank sections. A page arguing that its
+   author builds systems that work cannot sometimes not appear. */
+.reveal { opacity: 1; transform: none; }
 
 /* ============================ Tablet ================================== */
 @media (max-width: 980px) {
@@ -825,8 +830,6 @@ footer {
 
 /* =========================== Reduced motion =========================== */
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .reveal { opacity: 1; transform: none; transition: none; }
   .button { transition: none; }
   .button:hover { transform: none; }
   * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
