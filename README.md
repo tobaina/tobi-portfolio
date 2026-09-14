@@ -45,7 +45,7 @@ Only these, and nothing beyond them:
 - 85 database tables, 204 production migrations.
 - Tobi designed, built and operates the system.
 - CA$500 diagnostic; CA$3,500–6,000 build; CA$500–900/month optional support.
-- First three complete builds at CA$2,500 in exchange for a testimonial,
+- First two complete builds at CA$2,500 in exchange for a testimonial,
   permission to show blurred work and one 30-minute case-study conversation.
 - Contact: tobaina@gmail.com
 
