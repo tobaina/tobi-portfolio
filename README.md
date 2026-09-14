@@ -37,6 +37,25 @@ All three point at `/og-image.jpg`, which `vercel.json` rewrites to `/image.jpg`
 If you rename `image.jpg`, update the rewrite and both sets of tags, then retest
 with the LinkedIn Post Inspector and the Facebook Sharing Debugger.
 
+## Analytics
+
+Vercel Web Analytics, enabled on the project and loaded from `/_vercel/insights/script.js`
+-- same origin, cookieless, no personal data, no third-party request.
+
+Page views are counted automatically. `main.js` adds four events so the
+enquiry funnel is visible:
+
+| Event | Fires when |
+|---|---|
+| `contact_form_started` | someone types in the form, once per visit |
+| `contact_form_submitted` | the message was sent |
+| `contact_form_rejected` | the server refused the input (bad email, too short) |
+| `contact_form_failed` | the send broke, with `stage` of `server` or `network` |
+
+Only the fact that a stage happened is recorded. No name, email or message
+text is ever sent to analytics. If the script is blocked, `track()` does
+nothing and the form behaves exactly as before.
+
 ## Facts used on the page
 
 Only these, and nothing beyond them:

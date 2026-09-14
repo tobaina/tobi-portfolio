@@ -340,6 +340,12 @@
   </div>
 </footer>
 
+<!-- Vercel Web Analytics. Cookieless, no personal data, no third-party
+     request -- the script is served from this same origin. The queue shim
+     is defined first so events fired before the script loads are not lost. -->
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
 <script src="/main.js" defer></script>
 </body>
 </html>

@@ -6,6 +6,18 @@
 (function () {
   "use strict";
 
+  /* ------------------------------------------------------------- Analytics
+     Vercel Web Analytics. Counting only, never content: no name, email or
+     message text is ever sent, just that a stage happened. If the script is
+     blocked or fails to load, this does nothing and the form is unaffected.
+  */
+  function track(name, detail) {
+    try {
+      if (typeof window.va === "function") { window.va("event", { name: name, data: detail }); }
+    } catch (error) { /* analytics must never break the form */ }
+  }
+
+
   /* ---------------------------------------------------------------- Tabs
      A proper ARIA tab set: one stop in the tab order (roving tabindex),
      arrow / Home / End keys move between tabs, and the selected tab, the
@@ -78,6 +90,7 @@
     var status = document.getElementById("cf-status");
     var submit = document.getElementById("cf-submit");
     var fields = ["name", "email", "message"];
+    var started = false;
 
     function showError(field, text) {
       var input = document.getElementById("cf-" + field);
@@ -115,7 +128,14 @@
 
     fields.forEach(function (field) {
       var input = document.getElementById("cf-" + field);
-      if (input) input.addEventListener("input", function () { showError(field, ""); });
+      if (input) {
+        input.addEventListener("input", function () {
+          showError(field, "");
+          // Once per visit: the gap between this and a submit is the
+          // drop-off worth knowing about.
+          if (!started) { started = true; track("contact_form_started"); }
+        });
+      }
     });
 
     form.addEventListener("submit", function (event) {
@@ -156,6 +176,7 @@
         .then(function (result) {
           if (result.ok && result.data.ok) {
             form.reset();
+            track("contact_form_submitted");
             setStatus("Thank you \u2014 that reached me. I reply to every message, usually the same day.", "ok");
             return;
           }
@@ -164,11 +185,14 @@
             var bad = fields.filter(function (f) { return result.data.errors[f]; })[0];
             if (bad) document.getElementById("cf-" + bad).focus();
             setStatus("", "");
+            track("contact_form_rejected");
             return;
           }
+          track("contact_form_failed", { stage: "server" });
           setStatus(result.data.error || "Something went wrong. Please email tobaina@gmail.com directly.", "bad");
         })
         .catch(function () {
+          track("contact_form_failed", { stage: "network" });
           setStatus("Something went wrong. Please email tobaina@gmail.com directly.", "bad");
         })
         .then(function () {
