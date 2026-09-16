@@ -36,14 +36,24 @@
       "tab-overview":  "clients, workload and operational warnings in one view."
     };
 
+    var caseInteracted = false;
+
     function select(index, moveFocus) {
+      if (!caseInteracted) { caseInteracted = true; track("case_study_interaction"); }
       tabs.forEach(function (tab, i) {
         var selected = i === index;
         var panel = document.getElementById(tab.getAttribute("aria-controls"));
 
         tab.setAttribute("aria-selected", String(selected));
         tab.tabIndex = selected ? 0 : -1;
-        if (panel) { panel.hidden = !selected; }
+        if (panel) {
+          panel.hidden = !selected;
+          // A screen the visitor just asked for must not wait on lazy loading.
+          if (selected) {
+            var img = panel.querySelector("img");
+            if (img && img.loading === "lazy") { img.loading = "eager"; }
+          }
+        }
       });
 
       var current = tabs[index];
@@ -201,6 +211,17 @@
         });
     });
   }
+
+  /* ------------------------------------------------ Conversion tracking
+     Anything carrying data-track reports a click by name. Names only --
+     never the contents of a message, never an email address, never anything
+     that identifies the visitor.
+  */
+  Array.prototype.slice.call(document.querySelectorAll("[data-track]")).forEach(function (el) {
+    el.addEventListener("click", function () {
+      track(el.getAttribute("data-track") + "_click");
+    });
+  });
 
   /* ---------------------------------------------------- In-page navigation
      The nav links used to rely on CSS `scroll-behavior: smooth`. That
