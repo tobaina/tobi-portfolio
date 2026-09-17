@@ -1,0 +1,8 @@
+{
+  "name": "tobi-portfolio-tests",
+  "private": true,
+  "description": "Test harness for tobi.getpolisha.com. Lives outside the deployed site (see ../.vercelignore) so the site stays a zero-dependency static project.",
+  "scripts": {
+    "test": "node run.js"
+  }
+}

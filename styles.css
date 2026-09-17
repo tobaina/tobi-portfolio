@@ -508,6 +508,107 @@ section { padding: 110px 0; }
 .caption { margin: 15px 2px 0; color: #8fa0b8; font-size: 12px; }
 .caption b { color: #fff; }
 
+/* -------------------------- Before and after --------------------------- */
+/* Two plain columns on the navy field. The change is the argument, so it is
+   stated in words rather than decorated. */
+.ba {
+  display: grid;
+  grid-template-columns: 1fr 52px 1fr;
+  align-items: stretch;
+  gap: 0;
+  margin: 0 0 48px;
+}
+.ba-col {
+  padding: 26px 28px;
+  border: 1px solid var(--navy-line);
+  border-radius: var(--radius-m);
+  background: rgba(255, 255, 255, .03);
+}
+.ba-col p { margin: 0; color: var(--on-navy-soft); font-size: 15px; line-height: 1.6; }
+.ba-after { border-color: rgba(137, 169, 255, .34); background: rgba(137, 169, 255, .06); }
+.ba-after p { color: var(--on-navy); }
+.ba-label {
+  margin: 0 0 9px !important;
+  color: var(--on-navy-blue) !important;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.ba-arrow { display: grid; place-items: center; color: var(--on-navy-blue); font-size: 20px; }
+.ba-arrow::before { content: "\2192"; }
+
+.case-depth {
+  margin: 26px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--navy-line);
+  color: var(--on-navy-soft);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.case-depth span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--on-navy-blue);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+/* --------------------------- Other products ---------------------------- */
+.products { background: var(--ice); }
+.product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.pcard {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #d9e2ef;
+  border-radius: var(--radius-l);
+  background: #fff;
+}
+.pcard-shot { display: block; border-bottom: 1px solid var(--line-2); background: #eef3fa; }
+.pcard-shot img { width: 100%; height: auto; aspect-ratio: 1120 / 718; object-fit: cover; object-position: top center; }
+.pcard-body { display: flex; flex: 1; flex-direction: column; padding: 26px 26px 28px; }
+.pcard-body h3 { margin: 0 0 9px; font-size: 22px; letter-spacing: -.02em; }
+.pcard-body > p { margin: 0 0 18px; color: var(--body); font-size: 14px; line-height: 1.62; }
+.pcard-list {
+  display: grid;
+  gap: 7px;
+  margin: 0 0 22px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--body);
+}
+.pcard-list li { display: grid; grid-template-columns: 16px 1fr; gap: 9px; align-items: start; }
+.pcard-list li::before {
+  content: "\2022";
+  color: var(--blue);
+  font-size: 15px;
+  line-height: 1.35;
+}
+.pcard .button { margin-top: auto; align-self: flex-start; }
+.product-note { margin: 22px 0 0; color: var(--muted); font-size: 13px; }
+
+/* ------------------------- Founding engagement ------------------------- */
+/* A note under the prices, not a second half of the section. */
+.founding {
+  max-width: 74ch;
+  margin: 22px 0 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--blue);
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+  background: var(--blue-soft);
+  color: var(--body);
+  font-size: 13.5px;
+  line-height: 1.62;
+}
+.founding b { color: var(--ink); }
+
 /* ----------------------------- What I build ---------------------------- */
 .services { background: var(--ice); }
 .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -767,6 +868,10 @@ footer {
   .section-head { grid-template-columns: 1fr; gap: 13px; }
   .case-grid, .engagement { grid-template-columns: 1fr; }
   .service-grid { grid-template-columns: 1fr 1fr; }
+  .product-grid { grid-template-columns: 1fr; }
+  .ba { grid-template-columns: 1fr; gap: 12px; }
+  .ba-arrow { height: 34px; }
+  .ba-arrow::before { content: "\2193"; }
   .contact-grid { grid-template-columns: 1fr; gap: 34px; }
   .founder { grid-template-columns: 130px 1fr; }
   .founder img { width: 130px; }
@@ -809,6 +914,11 @@ footer {
   .tab:nth-child(2n) { border-right: 0; }
 
   .service-grid { grid-template-columns: 1fr; }
+  .product-grid { grid-template-columns: 1fr; }
+  .pcard-body { padding: 22px 20px 24px; }
+  .ba { grid-template-columns: 1fr; gap: 12px; margin-bottom: 36px; }
+  .ba-col { padding: 20px 18px; }
+  .founding { padding: 16px 16px; }
   .service { min-height: 0; }
 
   .price-row { grid-template-columns: 44px 1fr; }
