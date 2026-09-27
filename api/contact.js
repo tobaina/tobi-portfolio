@@ -69,6 +69,23 @@ async function addToMarketingList(email, key) {
 }
 
 const LIMITS = { name: 100, email: 254, message: 5000 };
+
+/* The contact form's "What do you need help with?" dropdown.
+   ⚠️  ALLOWLIST, NOT A STRING FIELD. Everything else on this form is the
+   visitor's own words and is clearly labelled as such in the notification.
+   This one is a fixed set of categories, so it is looked up rather than
+   copied: a hand-written POST can send `need: "<anything>"` just as easily
+   as the real form can, and an unvalidated value would be attacker-chosen
+   text appearing in my inbox under a label that says it came from a menu.
+   An unknown value is treated exactly like an untouched dropdown. */
+const NEEDS = {
+  website: "Website or landing page",
+  redesign: "Existing website redesign",
+  system: "Business system or portal",
+  automation: "Automation",
+  unsure: "Not sure yet",
+};
+const NEED_UNSTATED = "Not stated";
 const MIN_MESSAGE = 10;
 
 // Best-effort throttle. Serverless instances are recycled, so this is a
@@ -128,6 +145,10 @@ module.exports = async function handler(req, res) {
   // a stray client might send is a no, because the only thing that may turn
   // this on is somebody ticking the box.
   const subscribe = body.subscribe === true;
+  // Never required. A blank, missing or unrecognised value all mean the same
+  // thing, and none of them may stop a message arriving.
+  const need =
+    Object.prototype.hasOwnProperty.call(NEEDS, body.need) ? NEEDS[body.need] : NEED_UNSTATED;
 
   const errors = {};
   if (!name) errors.name = "Please tell me your name.";
@@ -173,6 +194,7 @@ module.exports = async function handler(req, res) {
     "New enquiry from tobi.getpolisha.com\n\n" +
     "Name:  " + name + "\n" +
     "Email: " + email + "\n" +
+    "Needs: " + need + "\n" +
     "List:  " + listOutcome + "\n\n" +
     message + "\n";
 
