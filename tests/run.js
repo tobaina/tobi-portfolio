@@ -471,7 +471,9 @@ function serve() {
       const priceRows = [...document.querySelectorAll('.price-row')].map(row => ({
         title: text(row.querySelector('h3')),
         amount: text(row.querySelector('strong')),
+        detail: text(row.querySelector('p')),
       }));
+      const priceGroups = [...document.querySelectorAll('.price-group-head')].map(h => text(h));
       return {
         notice: text(document.querySelector('.notice')),
         noticeLinksToContact: !!document.querySelector('.notice a[href="#contact"]'),
@@ -489,7 +491,8 @@ function serve() {
           .find(c => /GetPolisha/.test(text(c.querySelector('h3')))) || null),
         minorServices: [...document.querySelectorAll('.service-minor h4')].map(h => text(h)),
         priceRows,
-        priceNote: text(document.querySelector('.price-note')),
+        priceGroups,
+        priceNotes: [...document.querySelectorAll('.price-note')].map(n => text(n)).join(' '),
         founding: text(document.querySelector('.founding')),
         bodyText: document.body.innerText.replace(/\s+/g, ' '),
       };
@@ -534,30 +537,122 @@ function serve() {
     check('secondary services include website work',
       r.minorServices.some(t => /website/i.test(t)), r.minorServices.join(' | '));
 
-    // Pricing: four paths, and a website is not forced through a fixed price.
-    check('pricing offers four paths', r.priceRows.length === 4,
-      r.priceRows.map(x => x.title).join(' | '));
-    const website = r.priceRows.find(x => /website|focused project/i.test(x.title));
-    check('a website path exists in pricing', !!website,
-      r.priceRows.map(x => x.title).join(' | '));
-    check('the website path is quoted rather than fixed-priced',
-      !!website && !/CA\$/.test(website.amount), website ? website.amount : '');
-    check('the diagnostic is still CA$500',
-      r.priceRows.some(x => /diagnostic/i.test(x.title) && /CA\$500/.test(x.amount)));
-    check('the build range is stated once and consistently',
-      r.priceRows.some(x => /CA\$3,500.6,000/.test(x.amount)),
-      r.priceRows.map(x => x.amount).join(' | '));
-    check('no contradictory build range survives anywhere on the page',
-      !/CA\$2,500.6,000/.test(r.bodyText));
-    check('pricing explains that the diagnostic is optional',
-      /do not need the diagnostic/i.test(r.priceNote), r.priceNote.slice(0, 120));
+    /* ── PRICING ──────────────────────────────────────────────────────────
+       Three groups, and small website work carries a real number. A quote
+       cycle costs the same on a CA$1,800 job as on a CA$18,000 one, so on
+       small work "contact me for a quote" is a tax on both sides. These
+       assertions exist because the most likely future regression is somebody
+       quietly replacing a number with "get in touch". */
+    check('pricing is grouped rather than one ladder', r.priceGroups.length === 3,
+      r.priceGroups.join(' | '));
+    check('a website group exists', r.priceGroups.some(g => /website/i.test(g)),
+      r.priceGroups.join(' | '));
+    check('an operations group exists', r.priceGroups.some(g => /operations/i.test(g)),
+      r.priceGroups.join(' | '));
+    check('an after-launch group exists', r.priceGroups.some(g => /after launch/i.test(g)),
+      r.priceGroups.join(' | '));
 
-    /* The founding offer may exist, but it must be bounded and must never be
-       sold in exchange for a review. */
-    check('the founding offer states what it covers',
-      /first-phase|first phase/i.test(r.founding), r.founding.slice(0, 160));
-    check('the founding price is not conditional on a testimonial',
-      !/testimonial|review/i.test(r.founding), r.founding.slice(0, 200));
+    const priced = (t) => r.priceRows.find(x => new RegExp(t, 'i').test(x.title));
+    const landing = priced('landing page');
+    const site = priced('business site');
+    const custom = priced('custom functionality');
+    const diagnostic = priced('diagnostic');
+    const build = priced('system build');
+    const care = priced('care plan');
+    const change = priced('change work');
+
+    check('every priced row names an amount',
+      r.priceRows.length >= 7 && r.priceRows.every(x => /CA\$\s?\d/.test(x.amount)),
+      r.priceRows.map(x => x.title + '=' + x.amount).join(' | '));
+
+    // Small website work must stay a stated number, never a quote cycle.
+    check('a landing page carries a fixed price',
+      !!landing && /^CA\$1,800$/.test(landing.amount), landing ? landing.amount : 'missing');
+    check('a business site carries a fixed price',
+      !!site && /^CA\$4,500$/.test(site.amount), site ? site.amount : 'missing');
+    check('custom functionality is a floor, not a fixed price',
+      !!custom && /^from CA\$9,000$/.test(custom.amount), custom ? custom.amount : 'missing');
+    check('no website row hides behind a quote cycle',
+      ![landing, site, custom].some(x => x && /quote|scope|contact|enquir/i.test(x.amount)));
+
+    check('the diagnostic is CA$500', !!diagnostic && /^CA\$500$/.test(diagnostic.amount),
+      diagnostic ? diagnostic.amount : 'missing');
+    // The diagnostic must read as credit, not as a toll gate.
+    check('the diagnostic is credited against the build',
+      !!diagnostic && /credited in full/i.test(diagnostic.detail), diagnostic ? diagnostic.detail : '');
+    check('the build range is CA$6,000-12,000',
+      !!build && /CA\$6,000.12,000/.test(build.amount), build ? build.amount : 'missing');
+    // "Fixed scope in writing" told a buyer nothing about what arrives.
+    check('the build says what is actually delivered',
+      !!build && /handover/i.test(build.detail) && /production/i.test(build.detail),
+      build ? build.detail : '');
+
+    // The retainer is split, because one blended number set the wrong
+    // expectation in both directions.
+    check('hosting and change work are priced separately',
+      !!care && !!change && care.amount !== change.amount,
+      (care ? care.amount : '?') + ' / ' + (change ? change.amount : '?'));
+    check('the care plan is CA$250/mo', !!care && /CA\$250\/mo/.test(care.amount),
+      care ? care.amount : 'missing');
+
+    /* Every superseded number, anywhere on the page. Each of these was live at
+       some point, and each contradicted something else while it was. */
+    for (const stale of ['CA\\$2,500', 'CA\\$3,500', 'CA\\$500.900']) {
+      check('no superseded price survives: ' + stale.replace(/\\\\/g, ''),
+        !new RegExp(stale).test(r.bodyText));
+    }
+
+    check('pricing explains that the diagnostic is optional',
+      /do not need the diagnostic/i.test(r.priceNotes), r.priceNotes.slice(0, 120));
+    /* Terms on the page, not in an awkward email after the buyer has decided. */
+    check('payment terms are stated before the first call',
+      /half to book|40%/i.test(r.priceNotes), r.priceNotes.slice(0, 260));
+    check('scope changes are quoted before they are built',
+      /quoted before it is built/i.test(r.priceNotes), r.priceNotes.slice(0, 400));
+
+    /* The launch rate must be bounded, must sit inside the published range
+       rather than below it, and must never be sold for a review. */
+    check('the launch rate is bounded by a count',
+      /two places|two system builds/i.test(r.founding), r.founding.slice(0, 160));
+    check('the launch rate says what it buys',
+      /case study/i.test(r.founding), r.founding.slice(0, 200));
+    check('the launch rate is not conditional on a testimonial',
+      !/testimonial|review/i.test(r.founding), r.founding.slice(0, 220));
+    check('the launch rate does not undercut the published floor',
+      !/CA\$2,500/.test(r.founding), r.founding.slice(0, 220));
+
+    await ctx.close();
+  }
+
+  // ------------------------------------------------- iOS zoom on form focus
+  /* iOS Safari zooms the whole page when a focused control computes to under
+     16px, and does not zoom back out on blur -- so one tap on "Your name"
+     leaves a phone visitor pinching their way back to the next field, on the
+     one screen where an enquiry is either sent or abandoned. Every control was
+     15px, under the threshold by the smallest margin that still costs you the
+     enquiry. This asserts the whole form, not one field, so a new control
+     cannot reintroduce it. */
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const controls = await page.evaluate(() => {
+      const form = document.getElementById('contact-form');
+      if (!form) return null;
+      const sel = 'input:not([type=checkbox]):not([type=radio]), select, textarea';
+      return [...form.querySelectorAll(sel)].map(el => ({
+        id: el.id || el.name || el.tagName.toLowerCase(),
+        size: parseFloat(getComputedStyle(el).fontSize),
+      }));
+    });
+
+    check('the contact form has controls to check', !!controls && controls.length >= 4,
+      controls ? String(controls.length) : 'no form');
+    const tooSmall = (controls || []).filter(c => c.size < 16);
+    check('no form control is under 16px, which is what makes iOS zoom',
+      tooSmall.length === 0,
+      tooSmall.map(c => c.id + '=' + c.size + 'px').join(', '));
 
     await ctx.close();
   }

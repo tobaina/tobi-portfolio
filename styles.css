@@ -637,9 +637,16 @@ section { padding: 110px 0; }
 
 /* Plain guidance, not a highlighted box: it must not compete with the founding
    note below it, and two tinted panels in a row stop either being read. */
+.price-notes {
+  display: grid;
+  gap: 16px;
+  margin-top: 26px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
 .price-note {
   max-width: 74ch;
-  margin: 22px 0 0;
+  margin: 0;
   color: var(--body);
   font-size: 13.5px;
   line-height: 1.65;
@@ -727,30 +734,55 @@ section { padding: 110px 0; }
 /* ------------------------------- Pricing ------------------------------- */
 .engagement { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 
-.price-list { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-l); }
+/* Three groups instead of one numbered ladder. The old 01-04 counters implied
+   sequential stages every buyer walked through, which stopped being true the
+   moment website work and operations work became separate routes. The group
+   heading now carries the structure, so the counters are gone and the row is
+   two columns: what it is, and what it costs. */
+.price-group + .price-group { margin-top: 30px; }
+.price-group-head {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.price-list { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-l); background: #fff; }
+/* The price pairs with the TITLE, not with the whole row, and the description
+   runs full width underneath. The obvious `1fr auto` grid looks right on a
+   desktop and collapses on a phone: the price is nowrap, so it keeps its width
+   and the description gets squeezed into a two-word-per-line ribbon. Pairing
+   the price with the title instead means the only thing competing for space is
+   a short heading, and the sentence always has the full row. */
 .price-row {
-  display: grid;
-  grid-template-columns: 55px 1fr auto;
-  gap: 18px;
-  align-items: center;
-  padding: 26px;
+  padding: 20px 26px;
   border-bottom: 1px solid var(--line);
 }
 .price-row:last-child { border-bottom: 0; }
-.price-row > span {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: var(--blue-soft);
-  color: var(--blue);
-  font-family: var(--mono);
-  font-size: 10px;
+.price-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 18px;
 }
-.price-row h3 { margin: 0 0 3px; font-size: 17px; }
-.price-row p { margin: 0; color: var(--muted); font-size: 12px; }
-.price-row strong { text-align: right; font-size: 16px; }
+.price-row h3 { margin: 0; font-size: 17px; }
+.price-row p {
+  max-width: 64ch;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.price-row p b { color: var(--body); font-weight: 600; }
+/* `tabular-nums` so the column of prices lines up digit for digit. */
+.price-row strong {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 .offer {
   display: flex;
@@ -871,9 +903,18 @@ section { padding: 110px 0; }
   font-weight: 600;
   letter-spacing: .01em;
 }
+/* ⚠️  16px IS A FUNCTIONAL VALUE, NOT A TYPOGRAPHIC ONE. DO NOT REDUCE IT.
+   iOS Safari zooms the whole page when a focused control's computed font-size
+   is below 16px, and it does not zoom back out on blur. On a phone that means
+   tapping "Your name" throws the layout sideways and the visitor has to pinch
+   their way back before they can reach the next field -- on the one screen
+   where an enquiry is either sent or abandoned. These were 15px, which is
+   under the threshold by the smallest possible margin and cost the same.
+   A test asserts every control in this form computes to at least 16px. */
 .field input,
 .field textarea,
-.field select {
+.field select,
+.trap input {
   width: 100%;
   padding: 12px 14px;
   border: 1px solid #cfd8e6;
@@ -881,7 +922,7 @@ section { padding: 110px 0; }
   background: #fff;
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.5;
 }
 /* The native control is kept and only re-skinned: the chevron is drawn here
@@ -889,7 +930,7 @@ section { padding: 110px 0; }
    with no affordance at all reads as a disabled text box. `background-image`
    rather than a pseudo-element, since a replaced element has no ::after. */
 .field select {
-  height: 46px;
+  height: 48px;
   padding-right: 38px;
   appearance: none;
   -webkit-appearance: none;
@@ -917,7 +958,10 @@ section { padding: 110px 0; }
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  margin: 2px 0 2px;
+  /* Real space before the submit button. The opt-in is optional and the button
+     is not, and when they sit 2px apart they read as one control -- which is
+     exactly the impression an unbundled consent box must not give. */
+  margin: 4px 0 20px;
 }
 .consent input {
   flex: none;
