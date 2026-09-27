@@ -157,6 +157,10 @@
         email: form.elements.email.value.trim(),
         message: form.elements.message.value.trim(),
         company: form.elements.company.value.trim(),
+        // Optional, and never invented here: an untouched dropdown sends "",
+        // which the server reads as "not stated" rather than guessing a
+        // category on the visitor's behalf.
+        need: form.elements.need ? form.elements.need.value : "",
         // Sent as a boolean, read from the box itself. Never defaulted to
         // true anywhere in this file, on the server, or in a test fixture.
         subscribe: Boolean(form.elements.subscribe && form.elements.subscribe.checked)
