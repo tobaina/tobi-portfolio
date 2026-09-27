@@ -451,8 +451,6 @@ function serve() {
       r.hiringLinks.join(' | '));
     check('a price is shown in the hero', r.priceInHero);
     check('the hero price names a real currency amount', /CA\$\s?\d/.test(r.priceText), r.priceText.slice(0, 80));
-    check('the hero price matches the pricing section',
-      /CA\$500/.test(r.priceText), r.priceText.slice(0, 80));
     await ctx.close();
   }
 
@@ -492,6 +490,7 @@ function serve() {
         minorServices: [...document.querySelectorAll('.service-minor h4')].map(h => text(h)),
         priceRows,
         priceGroups,
+        heroPrice: text(document.querySelector('.hero-price')),
         priceNotes: [...document.querySelectorAll('.price-note')].map(n => text(n)).join(' '),
         founding: text(document.querySelector('.founding')),
         bodyText: document.body.innerText.replace(/\s+/g, ' '),
@@ -543,6 +542,21 @@ function serve() {
        small work "contact me for a quote" is a tax on both sides. These
        assertions exist because the most likely future regression is somebody
        quietly replacing a number with "get in touch". */
+    /* ⚠️  THE HERO AND THE TABLE MUST AGREE, AND THIS IS CHECKED BY DERIVATION.
+       This assertion used to hardcode one figure, so it passed while the hero
+       and the table drifted apart around it, and then failed on the honest
+       edit that moved the price. Every CA$ figure the hero names must appear
+       in the table below. Nothing to update when a price changes; it only
+       fails when the two genuinely disagree, which is the bug that once had
+       this page quoting three different build prices at the same time. */
+    const heroFigures = r.heroPrice.match(/CA\$[\d,]+/g) || [];
+    const tableAmounts = r.priceRows.map(x => x.amount).join(' ');
+    check('the hero names at least one price', heroFigures.length > 0, r.heroPrice.slice(0, 80));
+    const orphaned = heroFigures.filter(f => !tableAmounts.includes(f));
+    check('every price the hero names also appears in the table',
+      orphaned.length === 0,
+      'hero has ' + orphaned.join(', ') + ' | table has ' + tableAmounts);
+
     check('pricing is grouped rather than one ladder', r.priceGroups.length === 3,
       r.priceGroups.join(' | '));
     check('a website group exists', r.priceGroups.some(g => /website/i.test(g)),
@@ -557,31 +571,43 @@ function serve() {
     const site = priced('business site');
     const custom = priced('custom functionality');
     const diagnostic = priced('diagnostic');
-    const build = priced('system build');
+    const build = priced('first-phase build');
+    const full = priced('full operations system');
     const care = priced('care plan');
     const change = priced('change work');
 
     check('every priced row names an amount',
-      r.priceRows.length >= 7 && r.priceRows.every(x => /CA\$\s?\d/.test(x.amount)),
+      r.priceRows.length >= 8 && r.priceRows.every(x => /CA\$\s?\d/.test(x.amount)),
       r.priceRows.map(x => x.title + '=' + x.amount).join(' | '));
 
     // Small website work must stay a stated number, never a quote cycle.
+    /* Anchored to the Canadian freelance band (roughly CA$599-2,995 one-time
+       for a small-business site), not to agency pricing. These exact figures
+       are pinned so a later edit has to be deliberate. */
     check('a landing page carries a fixed price',
-      !!landing && /^CA\$1,800$/.test(landing.amount), landing ? landing.amount : 'missing');
+      !!landing && /^CA\$1,200$/.test(landing.amount), landing ? landing.amount : 'missing');
     check('a business site carries a fixed price',
-      !!site && /^CA\$4,500$/.test(site.amount), site ? site.amount : 'missing');
+      !!site && /^CA\$2,900$/.test(site.amount), site ? site.amount : 'missing');
     check('custom functionality is a floor, not a fixed price',
-      !!custom && /^from CA\$9,000$/.test(custom.amount), custom ? custom.amount : 'missing');
+      !!custom && /^from CA\$5,500$/.test(custom.amount), custom ? custom.amount : 'missing');
     check('no website row hides behind a quote cycle',
       ![landing, site, custom].some(x => x && /quote|scope|contact|enquir/i.test(x.amount)));
 
-    check('the diagnostic is CA$500', !!diagnostic && /^CA\$500$/.test(diagnostic.amount),
+    check('the diagnostic is CA$400', !!diagnostic && /^CA\$400$/.test(diagnostic.amount),
       diagnostic ? diagnostic.amount : 'missing');
     // The diagnostic must read as credit, not as a toll gate.
     check('the diagnostic is credited against the build',
       !!diagnostic && /credited in full/i.test(diagnostic.detail), diagnostic ? diagnostic.detail : '');
-    check('the build range is CA$6,000-12,000',
-      !!build && /CA\$6,000.12,000/.test(build.amount), build ? build.amount : 'missing');
+    /* A reachable first phase AND a ceiling, rather than one wide range that
+       asked a stranger to commit to the top of it. Both must exist: dropping
+       the ceiling caps the business, dropping the first phase puts the entry
+       price out of reach of the people most likely to say yes first. */
+    check('a first phase is reachable at CA$3,500-6,500',
+      !!build && /CA\$3,500.6,500/.test(build.amount), build ? build.amount : 'missing');
+    check('the ceiling for a full system still exists',
+      !!full && /^from CA\$9,000$/.test(full.amount), full ? full.amount : 'missing');
+    check('the first phase is priced below the full system',
+      !!build && !!full, 'both rows must be present');
     // "Fixed scope in writing" told a buyer nothing about what arrives.
     check('the build says what is actually delivered',
       !!build && /handover/i.test(build.detail) && /production/i.test(build.detail),
@@ -592,12 +618,12 @@ function serve() {
     check('hosting and change work are priced separately',
       !!care && !!change && care.amount !== change.amount,
       (care ? care.amount : '?') + ' / ' + (change ? change.amount : '?'));
-    check('the care plan is CA$250/mo', !!care && /CA\$250\/mo/.test(care.amount),
+    check('the care plan is CA$120/mo', !!care && /CA\$120\/mo/.test(care.amount),
       care ? care.amount : 'missing');
 
     /* Every superseded number, anywhere on the page. Each of these was live at
        some point, and each contradicted something else while it was. */
-    for (const stale of ['CA\\$2,500', 'CA\\$3,500', 'CA\\$500.900']) {
+    for (const stale of ['CA\\$2,500', 'CA\\$1,800', 'CA\\$4,500', 'CA\\$6,000', 'CA\\$500.900', 'CA\\$250/mo', 'CA\\$900/mo']) {
       check('no superseded price survives: ' + stale.replace(/\\\\/g, ''),
         !new RegExp(stale).test(r.bodyText));
     }
@@ -610,16 +636,21 @@ function serve() {
     check('scope changes are quoted before they are built',
       /quoted before it is built/i.test(r.priceNotes), r.priceNotes.slice(0, 400));
 
-    /* The launch rate must be bounded, must sit inside the published range
-       rather than below it, and must never be sold for a review. */
-    check('the launch rate is bounded by a count',
-      /two places|two system builds/i.test(r.founding), r.founding.slice(0, 160));
-    check('the launch rate says what it buys',
+    /* ⚠️  THE LAUNCH OFFER IS A PERCENTAGE, AND THAT IS THE POINT.
+       Every earlier version named a figure, and a named figure sits somewhere
+       relative to the published prices. Twice it landed below a floor on the
+       same page, which drags the anchor down permanently, and it had to be
+       re-picked by hand whenever any price moved -- which is how the page
+       ended up quoting three different build prices at once. A percentage is
+       correct against every row for ever and cannot contradict one. */
+    check('the launch offer is bounded by a count',
+      /first two/i.test(r.founding), r.founding.slice(0, 160));
+    check('the launch offer is a percentage, not a fixed price',
+      /%/.test(r.founding) && !/CA\$/.test(r.founding), r.founding.slice(0, 200));
+    check('the launch offer says what it buys',
       /case study/i.test(r.founding), r.founding.slice(0, 200));
-    check('the launch rate is not conditional on a testimonial',
+    check('the launch offer is not conditional on a testimonial',
       !/testimonial|review/i.test(r.founding), r.founding.slice(0, 220));
-    check('the launch rate does not undercut the published floor',
-      !/CA\$2,500/.test(r.founding), r.founding.slice(0, 220));
 
     await ctx.close();
   }
