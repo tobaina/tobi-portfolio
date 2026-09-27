@@ -80,16 +80,24 @@
         "@type": "OfferCatalog",
         "name": "Ways to work together",
         "itemListElement": [
-          { "@type": "Offer", "name": "Website or focused project",
-            "itemOffered": { "@type": "Service", "name": "Website or focused project", "description": "Business websites, redesigns and focused campaign pages. Quoted by scope after a short project brief." } },
+          { "@type": "Offer", "name": "Landing page", "price": "1800", "priceCurrency": "CAD",
+            "itemOffered": { "@type": "Service", "name": "Landing page", "description": "One page, your content, live in about a week." } },
+          { "@type": "Offer", "name": "Business site", "price": "4500", "priceCurrency": "CAD",
+            "itemOffered": { "@type": "Service", "name": "Business site", "description": "Up to six pages, contact form, analytics and the basics wired up." } },
+          { "@type": "Offer", "name": "Site with custom functionality", "priceCurrency": "CAD",
+            "priceSpecification": { "@type": "PriceSpecification", "minPrice": "9000", "priceCurrency": "CAD" },
+            "itemOffered": { "@type": "Service", "name": "Site with custom functionality", "description": "Logins, bookings, payments and anything with a database behind it." } },
           { "@type": "Offer", "name": "Operations diagnostic", "price": "500", "priceCurrency": "CAD",
-            "itemOffered": { "@type": "Service", "name": "Operations diagnostic", "description": "Workflow review, problems found and a written build recommendation." } },
-          { "@type": "Offer", "name": "Custom system build", "priceCurrency": "CAD",
-            "priceSpecification": { "@type": "PriceSpecification", "minPrice": "3500", "maxPrice": "6000", "priceCurrency": "CAD" },
-            "itemOffered": { "@type": "Service", "name": "Custom system build", "description": "A defined scope, with a written quote before work begins." } },
-          { "@type": "Offer", "name": "Ongoing support", "priceCurrency": "CAD",
-            "priceSpecification": { "@type": "PriceSpecification", "minPrice": "500", "maxPrice": "900", "priceCurrency": "CAD", "unitText": "MONTH" },
-            "itemOffered": { "@type": "Service", "name": "Ongoing support", "description": "Updates, fixes and improvements for the websites and systems I build." } }
+            "itemOffered": { "@type": "Service", "name": "Operations diagnostic", "description": "Workflow review, problems found and a written build recommendation. Credited in full against a build started within 30 days." } },
+          { "@type": "Offer", "name": "System build", "priceCurrency": "CAD",
+            "priceSpecification": { "@type": "PriceSpecification", "minPrice": "6000", "maxPrice": "12000", "priceCurrency": "CAD" },
+            "itemOffered": { "@type": "Service", "name": "System build", "description": "One workflow live in production, data migrated, two roles, written handover and 30 days of fixes." } },
+          { "@type": "Offer", "name": "Care plan", "price": "250", "priceCurrency": "CAD",
+            "priceSpecification": { "@type": "PriceSpecification", "price": "250", "priceCurrency": "CAD", "unitText": "MONTH" },
+            "itemOffered": { "@type": "Service", "name": "Care plan", "description": "Hosting, backups, uptime and small fixes." } },
+          { "@type": "Offer", "name": "Change work", "price": "900", "priceCurrency": "CAD",
+            "priceSpecification": { "@type": "PriceSpecification", "price": "900", "priceCurrency": "CAD", "unitText": "MONTH" },
+            "itemOffered": { "@type": "Service", "name": "Change work", "description": "Half a day of changes every month, or ad hoc when something comes up." } }
         ]
       }
     }
@@ -157,7 +165,7 @@
              said CA$3,500-6,000: the kind of gap a buyer does notice, and reads
              as carelessness about money. One range, stated the same in both
              places, and no implication that a website starts at CA$2,500. -->
-        <p class="hero-price">Websites and focused projects are quoted by scope. The operations diagnostic is <b>CA$500</b>, and system builds run CA$3,500&ndash;6,000, always quoted in writing before anything starts. <a href="#pricing" data-track="hero_pricing">See pricing</a></p>
+        <p class="hero-price">Websites from <b>CA$1,800</b>. The operations diagnostic is CA$500 and comes off the build price. System builds run CA$6,000&ndash;12,000, always quoted in writing before anything starts. <a href="#pricing" data-track="hero_pricing">See pricing</a></p>
       </div>
 
       <figure class="product">
@@ -448,47 +456,92 @@
         <p class="section-label">Clear engagement</p>
         <div class="section-copy">
           <h2>Different projects take different paths.</h2>
-          <p>Nothing here is a package you have to fit into. Every path ends in a written quote before work begins, and you keep whatever has been produced if you stop.</p>
+          <p>Fixed prices where the work is predictable, a range where it is not, and a written quote before anything starts. Nothing here is a package you have to squeeze into.</p>
         </div>
       </div>
 
-      <!-- This used to be a single ladder that started with a CA$500
-           diagnostic, which quietly told every website enquiry that the
-           cheapest way in was CA$500 and then CA$3,500 after that. A
-           straightforward website does not need a workflow diagnostic; it needs
-           a brief and a quote. Four paths, priced the way each one actually
-           works, and the one with no fixed number says so instead of guessing. -->
-      <div class="price-list">
-        <div class="price-row">
-          <span aria-hidden="true">01</span>
-          <div><h3>Website or focused project</h3><p>A short project brief settles the pages, content, forms, integrations and handover.</p></div>
-          <strong>Quoted by scope</strong>
-        </div>
-        <div class="price-row">
-          <span aria-hidden="true">02</span>
-          <div><h3>Operations diagnostic</h3><p>Workflow review, the problems found, and a written build recommendation.</p></div>
-          <strong>CA$500</strong>
-        </div>
-        <div class="price-row">
-          <span aria-hidden="true">03</span>
-          <div><h3>Custom system build</h3><p>A defined scope, with a written quote before work begins.</p></div>
-          <strong>CA$3,500&ndash;6,000</strong>
-        </div>
-        <div class="price-row">
-          <span aria-hidden="true">04</span>
-          <div><h3>Ongoing support</h3><p>Updates, fixes and improvements for the websites and systems I build.</p></div>
-          <strong>CA$500&ndash;900/mo</strong>
+      <!-- ── WHY THIS IS SHAPED THIS WAY ──────────────────────────────────
+           Three groups, not one ladder. The old single ladder started at the
+           CA$500 diagnostic, which told every website enquiry that the cheapest
+           way in was CA$500 and CA$3,500 after that.
+
+           Small website work carries a FIXED price on purpose. A quote cycle
+           costs the same whether the job is CA$1,800 or CA$18,000, so on small
+           work it eats the margin and delays the yes. A number on the page also
+           lets a visitor disqualify themselves without an email, which is a
+           favour to both sides.
+
+           Anything with a database behind it is "from", because the honest
+           range is too wide to state as one number.
+      -->
+      <div class="price-group">
+        <h3 class="price-group-head">Websites and focused projects</h3>
+        <div class="price-list">
+          <div class="price-row">
+            <div class="price-head"><h3>Landing page</h3><strong>CA$1,800</strong></div>
+            <p>One page, your content, live in about a week.</p>
+          </div>
+          <div class="price-row">
+            <div class="price-head"><h3>Business site</h3><strong>CA$4,500</strong></div>
+            <p>Up to six pages, contact form, analytics and the basics wired up.</p>
+          </div>
+          <div class="price-row">
+            <div class="price-head"><h3>Site with custom functionality</h3><strong>from CA$9,000</strong></div>
+            <p>Logins, bookings, payments &mdash; anything with a database behind it.</p>
+          </div>
         </div>
       </div>
 
-      <p class="price-note"><b>You do not need the diagnostic to start.</b> It earns its CA$500 when the problem is a tangled operation and nobody has mapped it yet. A website, a landing page or a small tool starts with a brief instead. What moves a quote is the number of screens, how much of the content already exists, how many systems it has to talk to, and whether anyone has to be able to edit it afterwards.</p>
+      <div class="price-group">
+        <h3 class="price-group-head">Operations systems</h3>
+        <div class="price-list">
+          <div class="price-row">
+            <div class="price-head"><h3>Operations diagnostic</h3><strong>CA$500</strong></div>
+            <p>Workflow review, the problems found, and a written build recommendation. <b>Credited in full</b> against a build started within 30 days.</p>
+          </div>
+          <div class="price-row">
+            <!-- The deliverables are stated because "fixed scope and delivery
+                 plan in writing" told a buyer nothing about what arrives. -->
+            <div class="price-head"><h3>System build</h3><strong>CA$6,000&ndash;12,000</strong></div>
+            <p>One workflow live in production, your data migrated, two roles, written handover, and 30 days of fixes included.</p>
+          </div>
+        </div>
+      </div>
 
-      <!-- Bounded deliberately. As an open "founding" price on the cards it sat
-           directly under a CA$3,500-6,000 range and invited everyone to expect
-           a full system for CA$2,500. It is also no longer conditional on a
-           testimonial: a review bought with a discount is not worth having, and
-           asking for one after delivery costs nothing and means more. -->
-      <p class="founding"><b>Founding systems offer.</b> I have two places for a defined first-phase operations build at CA$2,500. The scope and deliverables are agreed in writing before work begins, and anything beyond that first phase is quoted separately.</p>
+      <div class="price-group">
+        <h3 class="price-group-head">After launch</h3>
+        <div class="price-list">
+          <!-- One line at CA$500-900/mo was expensive for hosting and cheap for
+               real change work, so it set the wrong expectation either way.
+               Split, each half is priced for what it actually is. -->
+          <div class="price-row">
+            <div class="price-head"><h3>Care plan</h3><strong>CA$250/mo</strong></div>
+            <p>Hosting, backups, uptime and small fixes.</p>
+          </div>
+          <div class="price-row">
+            <div class="price-head"><h3>Change work</h3><strong>CA$900/mo</strong></div>
+            <p>Half a day of changes every month, rolled over if unused. Or ad hoc when something comes up.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="price-notes">
+        <p class="price-note"><b>You do not need the diagnostic to start.</b> It earns its CA$500 when the problem is a tangled operation nobody has mapped yet, and it comes straight off the build price if you go ahead. A website, a landing page or a small tool starts with a brief instead. What moves a quote is the number of screens, how much of the content already exists, how many systems it has to talk to, and whether anyone has to be able to edit it afterwards.</p>
+
+        <!-- ⚠️  TERMS, STATED BEFORE THE FIRST CALL. These were agreed in
+             email, which meant every project started with an awkward
+             conversation about money after the buyer had already decided.
+             On the page, they are simply the terms. -->
+        <p class="price-note"><b>How payment works.</b> Under CA$5,000: half to book the dates, half on handover. Above that: 40% to book, 40% at an agreed midpoint, 20% on handover. Anything outside the written scope is quoted before it is built, never after.</p>
+      </div>
+
+      <!-- Bounded by a count and by a reason, and priced ABOVE nothing: it used
+           to be CA$2,500, which sat below the floor of the range on the same
+           page and dragged the anchor down permanently. A discount that ends,
+           and says what it buys, reads as confidence. A number that never moves
+           is just the real price. It is not conditional on a testimonial: a
+           review bought with a discount is not worth having. -->
+      <p class="founding"><b>Launch rate, two places.</b> The next two system builds are CA$4,500 instead of CA$6,000&ndash;12,000. In exchange I write the work up as a case study, with your permission and with anything private removed. After those two, list price.</p>
     </div>
   </section>
 
