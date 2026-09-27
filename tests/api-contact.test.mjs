@@ -21,18 +21,47 @@ const BASE = { name: 'Test Person', email: 'p@example.com', message: 'Something 
 process.env.RESEND_API_KEY = 'test_key';
 process.env.EMAIL_FROM = 'Tobi <noreply@example.com>';
 
-async function run(body, ip, segmentId) {
+const SEGMENT_NAME = 'Free check opt-ins';
+const FOUND = [{ id: 'seg_found', name: SEGMENT_NAME, created_at: '2025-01-01 00:00:00+00' }];
+
+/* The stub routes on method and path rather than call order, because the list
+   lookup added more than one request to the ticked-box path and a positional
+   stub would have started passing or failing for reasons unrelated to what
+   each case is actually about. `opts.segments` is what GET /segments returns;
+   `opts.failSegments` makes that lookup fail. */
+async function run(body, ip, segmentId, opts = {}) {
   if (segmentId === undefined) delete process.env.RESEND_SEGMENT_ID;
   else process.env.RESEND_SEGMENT_ID = segmentId;
+  handler.__resetSegmentCacheForTests();
   const calls = [];
-  global.fetch = async (url, opts) => {
-    calls.push({ url, body: JSON.parse(opts.body) });
+  const created = [];
+  const pages = opts.pages || [{ data: opts.segments === undefined ? FOUND : opts.segments, has_more: false }];
+  let pageIndex = 0;
+  global.fetch = async (url, o = {}) => {
+    const method = (o.method || 'GET').toUpperCase();
+    calls.push({ url, method, body: o.body === undefined ? undefined : JSON.parse(o.body) });
+
+    if (String(url).startsWith('https://api.resend.com/segments') && method === 'GET') {
+      if (opts.failSegments) return { ok: false, status: 500, json: async () => ({}) };
+      const page = pages[Math.min(pageIndex, pages.length - 1)];
+      pageIndex++;
+      return { ok: true, status: 200, json: async () => ({ object: 'list', has_more: page.has_more, data: [...page.data, ...created] }) };
+    }
+    if (String(url) === 'https://api.resend.com/segments' && method === 'POST') {
+      created.push({ id: 'seg_created', name: SEGMENT_NAME, created_at: '2026-01-01 00:00:00+00' });
+      return { ok: true, status: 200, json: async () => ({ object: 'segment', id: 'seg_created', name: SEGMENT_NAME }) };
+    }
+    if (opts.contactsFail && String(url).endsWith('/contacts')) {
+      return { ok: false, status: 422, text: async () => '' };
+    }
     return { ok: true, status: 200, text: async () => '' };
   };
   const res = mkRes();
   await handler(mkReq(body, ip), res);
   return { res, calls };
 }
+const contactsIn = (calls) => calls.filter(c => String(c.url).endsWith('/contacts'));
+const segmentGets = (calls) => calls.filter(c => String(c.url).startsWith('https://api.resend.com/segments') && c.method === 'GET');
 
 // 1. no tick, no segment -> only the notification email
 {
@@ -58,12 +87,33 @@ async function run(body, ip, segmentId) {
   check('ticked box: owner email says added', !!email && /List:  added/.test(email.body.text));
 }
 
-// 3. ticked, NO segment configured -> enquiry must still succeed
+/* 3. ticked, NO env var -> the segment is found by NAME and the person is added.
+
+   ⚠️  THIS BLOCK USED TO ASSERT THE BUG. It checked that with no
+   RESEND_SEGMENT_ID nothing was attempted and the owner email said
+   "no_segment" -- and it passed, every run, while no deployment of any of the
+   three sites had that variable set and every ticked box since launch was
+   logged and dropped. A green test on a feature that had never once worked.
+   The variable is an override now; the name is how the list is found. */
 {
   const { res, calls } = await run({ ...BASE, subscribe: true }, '3.3.3.3');
-  check('no segment: enquiry still succeeds', res.code === 200 && res.body.ok === true);
-  check('no segment: no contact attempted', !calls.some(c => c.url.endsWith('/contacts')));
-  check('no segment: owner email says no_segment', /List:  no_segment/.test(calls[0].body.text));
+  check('no env var: enquiry still succeeds', res.code === 200 && res.body.ok === true);
+  const contact = contactsIn(calls)[0];
+  check('no env var: the person IS added', !!contact, JSON.stringify(calls.map(c => c.url)));
+  check('no env var: added to the segment found by name',
+    !!contact && contact.body.segments[0] === 'seg_found',
+    contact && JSON.stringify(contact.body));
+  check('no env var: owner email says added',
+    /List:  added/.test(calls.find(c => c.url.endsWith('/emails')).body.text));
+}
+
+// 3b. the list is genuinely unavailable -> the enquiry must still succeed
+{
+  const { res, calls } = await run({ ...BASE, subscribe: true }, '3.3.3.4', undefined, { failSegments: true });
+  check('lookup fails: enquiry still succeeds', res.code === 200 && res.body.ok === true);
+  check('lookup fails: no contact attempted', contactsIn(calls).length === 0);
+  check('lookup fails: owner email says no_segment',
+    /List:  no_segment/.test(calls.find(c => c.url.endsWith('/emails')).body.text));
 }
 
 // 4. truthy-but-not-true values must not subscribe anyone
@@ -160,6 +210,63 @@ for (const v of ['true', 'on', 1, 'yes', {}]) {
     !calls.some(c => c.url.endsWith('/contacts')), JSON.stringify(calls.map(c => c.url)));
   check('need: the owner email still records no list request',
     /List:  not_requested/.test(calls[0].body.text), calls[0].body.text);
+}
+
+// 8. finding the shared segment by name
+{
+  // Creates it on the very first opt-in, when the account has none yet.
+  const { calls } = await run({ ...BASE, subscribe: true }, '8.1.1.1', undefined, { segments: [] });
+  const created = calls.find(c => String(c.url) === 'https://api.resend.com/segments' && c.method === 'POST');
+  check('name: the segment is created when none exists', !!created);
+  check('name: created with the exact shared name',
+    !!created && JSON.stringify(created.body) === JSON.stringify({ name: 'Free check opt-ins' }),
+    created && JSON.stringify(created.body));
+  check('name: the person lands in the new segment',
+    contactsIn(calls)[0] && contactsIn(calls)[0].body.segments[0] === 'seg_created');
+}
+{
+  // Two instances racing can leave two segments with the same name. Everyone
+  // picking the oldest is what stops the list splitting permanently.
+  const { calls } = await run({ ...BASE, subscribe: true }, '8.2.2.2', undefined, {
+    segments: [
+      { id: 'seg_newer', name: SEGMENT_NAME, created_at: '2026-03-01 00:00:00+00' },
+      { id: 'seg_older', name: SEGMENT_NAME, created_at: '2025-02-01 00:00:00+00' },
+    ],
+  });
+  check('name: a duplicate name settles on the oldest',
+    contactsIn(calls)[0] && contactsIn(calls)[0].body.segments[0] === 'seg_older',
+    contactsIn(calls)[0] && JSON.stringify(contactsIn(calls)[0].body));
+}
+{
+  // GET /segments returns 20 per page. Without pagination the list would go
+  // missing the day the account's 21st segment appeared.
+  const { calls } = await run({ ...BASE, subscribe: true }, '8.3.3.3', undefined, {
+    pages: [
+      { data: [{ id: 'seg_noise', name: 'Something else', created_at: '2025-01-01 00:00:00+00' }], has_more: true },
+      { data: [{ id: 'seg_real', name: SEGMENT_NAME, created_at: '2025-05-01 00:00:00+00' }], has_more: false },
+    ],
+  });
+  check('name: the lookup pages past the first 20',
+    contactsIn(calls)[0] && contactsIn(calls)[0].body.segments[0] === 'seg_real',
+    contactsIn(calls)[0] && JSON.stringify(contactsIn(calls)[0].body));
+  check('name: no duplicate is created when it was on a later page',
+    !calls.some(c => String(c.url) === 'https://api.resend.com/segments' && c.method === 'POST'));
+}
+{
+  // An explicit id still wins, and must cost no lookup at all.
+  const { calls } = await run({ ...BASE, subscribe: true }, '8.4.4.4', 'seg_pinned', { segments: [] });
+  check('name: an explicit RESEND_SEGMENT_ID still wins',
+    contactsIn(calls)[0] && contactsIn(calls)[0].body.segments[0] === 'seg_pinned');
+  check('name: pinning the id skips the lookup entirely', segmentGets(calls).length === 0);
+}
+{
+  // Nothing but the address and its subscription state may ever be sent to a
+  // marketing provider from this form.
+  const { calls } = await run({ ...BASE, subscribe: true }, '8.5.5.5');
+  const body = contactsIn(calls)[0] && contactsIn(calls)[0].body;
+  check('name: the contact payload is still only email/unsubscribed/segments',
+    !!body && JSON.stringify(Object.keys(body).sort()) === JSON.stringify(['email', 'segments', 'unsubscribed']),
+    JSON.stringify(body));
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
