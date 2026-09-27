@@ -303,6 +303,85 @@ function serve() {
     await ctx.close();
   }
 
+  // --------------------------------------------------- marketing consent
+  {
+    // Sending an enquiry is not consent to be marketed to. These assertions
+    // exist so that can never quietly stop being true: a pre-ticked box, a
+    // required box, or consent bundled into the send button would each be an
+    // unlawful opt-in, and each is a one-character edit away at all times.
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+    const page = await ctx.newPage();
+    await mockContact(page);
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const box = await page.evaluate(() => {
+      const el = document.getElementById('cf-subscribe');
+      if (!el) return null;
+      const label = document.querySelector('label[for="cf-subscribe"]');
+      const note = document.getElementById('cf-subscribe-note');
+      const wrap = el.closest('.consent');
+      return {
+        type: el.type,
+        checked: el.checked,
+        defaultChecked: el.defaultChecked,
+        required: el.required,
+        name: el.name,
+        labelled: !!(label && label.textContent.trim().length > 10),
+        described: el.getAttribute('aria-describedby') === 'cf-subscribe-note' && !!note,
+        mentionsUnsubscribe: !!(note && /unsubscribe/i.test(note.textContent)),
+        saysOptional: !!(note && /leave this unticked|only reply/i.test(note.textContent)),
+        separateFromSubmit: !!(wrap && !wrap.querySelector('button')),
+      };
+    });
+
+    check('marketing consent box exists', !!box);
+    check('marketing consent is a checkbox', box && box.type === 'checkbox');
+    check('marketing consent starts unticked', box && box.checked === false);
+    check('marketing consent is never pre-ticked in the markup', box && box.defaultChecked === false);
+    check('marketing consent is not required', box && box.required === false);
+    check('marketing consent has its own label', box && box.labelled);
+    check('marketing consent explanation is tied to the box', box && box.described);
+    check('marketing consent promises an unsubscribe', box && box.mentionsUnsubscribe);
+    check('marketing consent says what happens if you leave it', box && box.saysOptional);
+    check('marketing consent is separate from the send button', box && box.separateFromSubmit);
+
+    // The source of truth for the markup, not just the rendered state: a
+    // `checked` attribute in index.html would pass a live .checked test only
+    // until someone reset the form.
+    const markup = await page.evaluate(() =>
+      (document.getElementById('cf-subscribe') || {}).outerHTML || '');
+    check('no checked attribute in the consent markup', !/\bchecked\b/i.test(markup), markup);
+
+    // Untouched box -> subscribe:false on the wire.
+    let sentBody = null;
+    await page.route('**/api/contact', route => {
+      sentBody = route.request().postData();
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
+    });
+    await page.fill('#cf-name', 'Test Person');
+    await page.fill('#cf-email', 'test@example.com');
+    await page.fill('#cf-message', 'Something in my operation is breaking every week.');
+    await page.click('#cf-submit');
+    await page.waitForTimeout(600);
+    check('an untouched box sends subscribe:false',
+      !!sentBody && JSON.parse(sentBody).subscribe === false, sentBody || 'no request');
+
+    // Ticked box -> subscribe:true, and the message still sends.
+    sentBody = null;
+    await page.fill('#cf-name', 'Test Person');
+    await page.fill('#cf-email', 'test@example.com');
+    await page.fill('#cf-message', 'Something in my operation is breaking every week.');
+    await page.check('#cf-subscribe');
+    await page.click('#cf-submit');
+    await page.waitForTimeout(600);
+    check('a ticked box sends subscribe:true',
+      !!sentBody && JSON.parse(sentBody).subscribe === true, sentBody || 'no request');
+    check('the message still sends when subscribing',
+      !!sentBody && JSON.parse(sentBody).message.length > 10);
+
+    await ctx.close();
+  }
+
   // ------------------------------------------------ reduced motion + focus
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, reducedMotion: 'reduce' });
