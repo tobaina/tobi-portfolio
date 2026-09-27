@@ -289,4 +289,39 @@
     }
   }
 
+  /* ----------------------------------------------------- Walkthrough video
+     The section in index.html ships `hidden` and carries an EMPTY
+     `data-video`. It is revealed only when that attribute names a file.
+
+     Why an attribute rather than asking the server whether the file is
+     there: a HEAD probe for a file that has not been uploaded yet puts a 404
+     in the network log of every single page load, forever, which the site's
+     own test suite correctly refuses to accept. The attribute costs no
+     request, cannot 404, and cannot half-work.
+
+     TO PUBLISH THE WALKTHROUGH:
+       1. Put walkthrough.mp4 in /assets (optionally walkthrough-poster.jpg).
+       2. In index.html, set data-video="/assets/walkthrough.mp4" on
+          #walkthrough (and data-poster if you added one).
+       3. Deploy.
+     Until step 2 happens a visitor sees nothing at all -- not a dead player,
+     not a heading promising a video that cannot play. A page arguing that
+     its author builds systems that work does not get to ship a broken one.
+  */
+  var walkthrough = document.getElementById("walkthrough");
+  if (walkthrough) {
+    var videoUrl = (walkthrough.getAttribute("data-video") || "").trim();
+    var posterUrl = (walkthrough.getAttribute("data-poster") || "").trim();
+    var video = document.getElementById("walkthrough-video");
+
+    if (videoUrl && video) {
+      var source = document.createElement("source");
+      source.src = videoUrl;
+      source.type = /\.webm$/i.test(videoUrl) ? "video/webm" : "video/mp4";
+      video.appendChild(source);
+      if (posterUrl) { video.setAttribute("poster", posterUrl); }
+      walkthrough.hidden = false;
+    }
+  }
+
 }());
