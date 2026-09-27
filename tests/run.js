@@ -602,16 +602,59 @@ function serve() {
        asked a stranger to commit to the top of it. Both must exist: dropping
        the ceiling caps the business, dropping the first phase puts the entry
        price out of reach of the people most likely to say yes first. */
-    check('a first phase is reachable at CA$3,500-6,500',
-      !!build && /CA\$3,500.6,500/.test(build.amount), build ? build.amount : 'missing');
+    check('a first phase is reachable at CA$4,800-7,500',
+      !!build && /CA\$4,800.7,500/.test(build.amount), build ? build.amount : 'missing');
     check('the ceiling for a full system still exists',
-      !!full && /^from CA\$9,000$/.test(full.amount), full ? full.amount : 'missing');
+      !!full && /^from CA\$12,000$/.test(full.amount), full ? full.amount : 'missing');
     check('the first phase is priced below the full system',
       !!build && !!full, 'both rows must be present');
     // "Fixed scope in writing" told a buyer nothing about what arrives.
     check('the build says what is actually delivered',
       !!build && /handover/i.test(build.detail) && /production/i.test(build.detail),
       build ? build.detail : '');
+
+    /* ⚠️  DURATIONS ARE MEASURED, NOT MARKETING. These assertions exist
+       because this row once promised a first-phase system build "in about
+       two weeks" at a CA$3,500 floor -- a speed never achieved on any real
+       project (AIDRR six weeks, GetPolisha four, Verdict four, this site
+       two) and a floor of roughly CA$175/day across four actual weeks. A
+       quoted duration is a promise to a buyer, so shortening one to sound
+       competitive has to fail here rather than ship. If a future edit really
+       does make the work faster, change the measured record in the comment
+       above the row first, then these numbers. */
+    check('the first phase quotes four weeks, not two',
+      !!build && /four weeks/i.test(build.detail) && !/two weeks/i.test(build.detail),
+      build ? build.detail : 'missing');
+    check('the full system is quoted at six weeks and up',
+      !!full && /six weeks/i.test(full.detail), full ? full.detail : 'missing');
+    check('every website row states how long it takes',
+      [landing, site, custom].every(x => x && /week/i.test(x.detail)),
+      [landing, site, custom].map(x => x ? x.title + ': ' + x.detail : 'missing').join(' | '));
+
+    /* The ladder has to stay monotonic in BOTH price and time, or the page
+       argues against itself: a buyer who reads "four weeks" beside a floor
+       lower than the shorter job's floor concludes one of the two numbers is
+       untrue, and they are right. */
+    /* Parse every CA$ figure in a cell, so a range like "CA$4,800-7,500"
+       yields [4800, 7500] rather than the 48007500 that stripping non-digits
+       from the whole string would produce -- a bug that made this comparison
+       pass for the wrong reason no matter what the prices were. */
+    const figures = (t) => (String(t).match(/[\d][\d,]*/g) || [])
+      .map((n) => parseInt(n.replace(/,/g, ''), 10));
+    const floorOf = (row) => (row ? figures(row.amount)[0] : NaN);
+    const ceilingOf = (row) => {
+      const f = row ? figures(row.amount) : [];
+      return f.length ? f[f.length - 1] : NaN;
+    };
+    check('price parsing reads a range as two figures',
+      JSON.stringify(figures('CA$4,800\u20137,500')) === '[4800,7500]',
+      JSON.stringify(figures('CA$4,800\u20137,500')));
+    check('the first-phase floor sits above the fixed-price website work',
+      floorOf(build) > ceilingOf(site),
+      (build ? build.amount : '?') + ' vs ' + (site ? site.amount : '?'));
+    check('the full system starts above the first-phase ceiling',
+      floorOf(full) > ceilingOf(build),
+      (full ? full.amount : '?') + ' vs ' + (build ? build.amount : '?'));
 
     // The retainer is split, because one blended number set the wrong
     // expectation in both directions.
@@ -623,7 +666,8 @@ function serve() {
 
     /* Every superseded number, anywhere on the page. Each of these was live at
        some point, and each contradicted something else while it was. */
-    for (const stale of ['CA\\$2,500', 'CA\\$1,800', 'CA\\$4,500', 'CA\\$6,000', 'CA\\$500.900', 'CA\\$250/mo', 'CA\\$900/mo']) {
+    for (const stale of ['CA\\$2,500', 'CA\\$1,800', 'CA\\$4,500', 'CA\\$6,000', 'CA\\$500.900', 'CA\\$250/mo', 'CA\\$900/mo',
+                         'CA\\$3,500', 'CA\\$6,500', 'CA\\$9,000']) {
       check('no superseded price survives: ' + stale.replace(/\\\\/g, ''),
         !new RegExp(stale).test(r.bodyText));
     }
