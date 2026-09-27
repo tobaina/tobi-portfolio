@@ -812,6 +812,37 @@ section { padding: 110px 0; }
 .field input[aria-invalid="true"],
 .field textarea[aria-invalid="true"] { border-color: #b42318; }
 
+/* The marketing opt-in. Deliberately quieter than the fields above it: it is
+   optional, and a box styled to look like a required field reads as one. */
+.consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 2px 0 2px;
+}
+.consent input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 3px 0 0;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+.consent label {
+  display: block;
+  color: var(--body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.consent-note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.form-card .consent :focus-visible { outline-color: var(--blue); }
+
 .form-card .button {
   width: 100%;
   margin-top: 4px;

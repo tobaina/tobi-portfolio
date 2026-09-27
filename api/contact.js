@@ -16,6 +16,58 @@
 
 const TO = "tobaina@gmail.com";
 
+/* --------------------------------------------------------------------------
+   ONE LIST, NOT THREE
+
+   getpolisha.com already keeps its marketing list as a Resend segment
+   (src/lib/email.ts, addToMarketingAudience). Before this, an address that
+   arrived through this form went nowhere but an inbox, so the same person
+   could be a "contact" here and a "subscriber" there with no single place to
+   mail from. Ticking the box on this form now writes into that same segment.
+
+   WHY RESEND AND NOT A LIST OF OUR OWN: the promise beside the box is
+   "unsubscribe any time", and keeping it needs somewhere durable to record
+   that someone left. This is a static site with no database. A Resend
+   segment is that store: broadcasts sent to it carry a working unsubscribe
+   link and the List-Unsubscribe header Gmail and Apple Mail act on, and the
+   suppression outlives any deploy.
+
+   ⚠️  UNREACHABLE WITHOUT A DELIBERATE TICK. `unsubscribed: false` records
+   the consent just given, which does resubscribe someone who previously left
+   and has now opted in again — right, but only because getting here requires
+   the box. If a caller ever appears that does not require one, this line
+   quietly becomes a way of undoing people's unsubscribes.
+
+   Uses RESEND_SEGMENT_ID, the same variable getpolisha reads. If it is not
+   set on this project the enquiry still works and this is skipped with a log
+   line — a missing list must never cost someone their message.
+   -------------------------------------------------------------------------- */
+async function addToMarketingList(email, key) {
+  const segmentId = process.env.RESEND_SEGMENT_ID;
+  if (!segmentId) {
+    console.info("[contact] RESEND_SEGMENT_ID is unset; opted-in address not stored.");
+    return "no_segment";
+  }
+  try {
+    const res = await fetch("https://api.resend.com/contacts", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + key,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: email, unsubscribed: false, segments: [segmentId] }),
+    });
+    if (!res.ok) {
+      console.error("[contact] Resend rejected contact:", res.status);
+      return "http_" + res.status;
+    }
+    return "added";
+  } catch (error) {
+    console.error("[contact] Could not reach Resend for the list:", error && error.message);
+    return "fetch_threw";
+  }
+}
+
 const LIMITS = { name: 100, email: 254, message: 5000 };
 const MIN_MESSAGE = 10;
 
@@ -72,6 +124,10 @@ module.exports = async function handler(req, res) {
   const name = clean(body.name, LIMITS.name);
   const email = clean(body.email, LIMITS.email);
   const message = clean(body.message, LIMITS.message);
+  // Strictly `=== true`. A missing field, "false", "off", 0 or anything else
+  // a stray client might send is a no, because the only thing that may turn
+  // this on is somebody ticking the box.
+  const subscribe = body.subscribe === true;
 
   const errors = {};
   if (!name) errors.name = "Please tell me your name.";
@@ -109,10 +165,15 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  // Done before the notification so its outcome can go in the email. A
+  // silent failure here would otherwise look exactly like a silent success.
+  const listOutcome = subscribe ? await addToMarketingList(email, key) : "not_requested";
+
   const text =
     "New enquiry from tobi.getpolisha.com\n\n" +
     "Name:  " + name + "\n" +
-    "Email: " + email + "\n\n" +
+    "Email: " + email + "\n" +
+    "List:  " + listOutcome + "\n\n" +
     message + "\n";
 
   try {

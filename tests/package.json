@@ -1,8 +1,9 @@
 {
   "name": "tobi-portfolio-tests",
   "private": true,
-  "description": "Test harness for tobi.getpolisha.com. Lives outside the deployed site (see ../.vercelignore) so the site stays a zero-dependency static project.",
+  "description": "Test harness for tobi.getpolisha.com. Lives outside the deployed site (see ../.vercelignore) so the site stays a zero-dependency static project. `npm test` drives the real site in a real browser at every supported width; `npm run test:api` exercises api/contact.js directly with a stubbed fetch, so the consent branches are checked without ever calling Resend.",
   "scripts": {
-    "test": "node run.js"
+    "test": "node run.js",
+    "test:api": "node api-contact.test.mjs"
   }
 }
