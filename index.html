@@ -112,6 +112,7 @@
       <a href="#products">Products</a>
       <a href="#services">What I build</a>
       <a href="#pricing">Pricing</a>
+      <a href="#hiring">Hiring?</a>
       <a class="nav-cta" href="#contact" data-track="nav_contact">Start a conversation</a>
     </div>
   </nav>
@@ -134,6 +135,10 @@
           <li><i aria-hidden="true">&#10003;</i>Written handover</li>
           <li><i aria-hidden="true">&#10003;</i>You own the system</li>
         </ul>
+        <!-- The price was four screens down, so anyone who left early left
+             without it. A range, not a single number: the diagnostic is the
+             real entry point and is what "from" refers to. -->
+        <p class="hero-price">Engagements start at <b>CA$500</b> for the diagnostic. Builds are CA$2,500&ndash;6,000, quoted in writing before anything starts. <a href="#pricing" data-track="hero_pricing">See the stages</a></p>
       </div>
 
       <figure class="product">
@@ -250,6 +255,34 @@
 
           <p class="caption" id="gallery-caption" aria-live="polite"><b>Capacity:</b> approved workload and available client slots, enforced by the database.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================== Walkthrough ===========================
+       ⚠️  HIDDEN UNTIL THE FILE EXISTS, ON PURPOSE.
+       This section ships `hidden`, with an EMPTY data-video and no <source>.
+       main.js reveals it only when data-video names a file. Until then a
+       visitor sees nothing at all -- not a dead player, not a "coming soon"
+       placeholder, and not a heading promising a video that cannot play.
+
+       To publish it:
+         1. Put walkthrough.mp4 in /assets (walkthrough-poster.jpg optional).
+         2. Set data-video="/assets/walkthrough.mp4" below, and data-poster
+            if you added a poster.
+         3. Deploy.
+  -->
+  <section class="walkthrough" id="walkthrough" hidden data-video="" data-poster="">
+    <div class="shell">
+      <div class="section-head">
+        <p class="section-label">Recorded walkthrough</p>
+        <div class="section-copy">
+          <h2>Watch the system actually work.</h2>
+          <p>A short screen recording of the Direct Apply operations CRM in use. Private information is blurred throughout.</p>
+        </div>
+      </div>
+      <div class="walkthrough-frame">
+        <video id="walkthrough-video" controls preload="none" playsinline width="1120" height="630"></video>
       </div>
     </div>
   </section>
@@ -392,6 +425,31 @@
     </div>
   </section>
 
+  <!-- ============================== Hiring ==============================
+       Two different people read this page and only one of them was being
+       spoken to. Everything above answers "will you build this for my
+       business". This answers "are you available to hire", which is the
+       question a recruiter or hiring manager arrives with -- and until now
+       the only reply was a contact form asking what is broken in their
+       operation, which is the wrong question to put to them. Kept short and
+       placed last on purpose: it is the smaller audience, and it must not
+       compete with the build pitch above it. -->
+  <section class="hiring" id="hiring">
+    <div class="shell">
+      <div class="hiring-box">
+        <div>
+          <p class="section-label">Hiring rather than commissioning?</p>
+          <h2>The same work, on your team instead of as a project.</h2>
+          <p>If you are filling a role rather than buying a build, everything on this page is the portfolio: systems designed, built, shipped and operated by one person, with the reasoning written down. I am open to permanent and contract roles in operations engineering, internal tooling and full-stack product work, remote or in southern Ontario.</p>
+        </div>
+        <div class="hiring-actions">
+          <a class="button primary" href="https://www.linkedin.com/in/tobaina/" target="_blank" rel="noopener" data-track="hiring_linkedin">See my LinkedIn profile <span class="arrow" aria-hidden="true">&#8599;</span></a>
+          <a class="button secondary" href="mailto:tobaina@gmail.com?subject=Role%20enquiry" data-track="hiring_email">Email me about a role</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============================= Contact ============================= -->
   <section class="contact" id="contact">
     <div class="shell">
@@ -446,6 +504,7 @@
     <a href="#products">Products</a>
     <a href="#services">Services</a>
     <a href="#pricing">Pricing</a>
+    <a href="#hiring">Hiring</a>
     <a href="mailto:tobaina@gmail.com">Email</a>
   </div>
 </footer>

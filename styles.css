@@ -858,6 +858,64 @@ footer {
    author builds systems that work cannot sometimes not appear. */
 .reveal { opacity: 1; transform: none; }
 
+/* --------------------------- Hero price line ---------------------------
+   The price used to live only in the pricing section, four screens down, so
+   anyone who left early left without it. Deliberately quiet: a line of body
+   copy, not a badge, so it informs without turning the hero into a price
+   tag. */
+.hero-price {
+  max-width: 60ch;
+  margin: 22px 0 0;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--blue);
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+  background: var(--blue-soft);
+  color: var(--body);
+  font-size: 13.5px;
+  line-height: 1.62;
+}
+.hero-price b { color: var(--ink); }
+.hero-price a { color: var(--blue); font-weight: 600; }
+
+/* ---------------------------- Walkthrough -----------------------------
+   Revealed by main.js only when the video file actually exists. Until then
+   the section carries `hidden` and this styling never applies to anything. */
+.walkthrough { background: var(--ice); }
+.walkthrough-frame {
+  margin-top: 26px;
+  padding: 10px;
+  border-radius: var(--radius-l);
+  background: var(--navy);
+  border: 1px solid var(--navy-line);
+}
+.walkthrough-frame video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-m);
+  background: #000;
+}
+
+/* ------------------------------- Hiring -------------------------------
+   The second audience, given its own band rather than its own page: one
+   short statement and two ways to act, kept visually lighter than the build
+   pitch above it so it cannot compete with it. */
+.hiring { padding-top: 0; }
+.hiring-box {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 32px;
+  padding: 30px 32px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: var(--white);
+}
+.hiring-box h2 { margin: 8px 0 10px; font-size: clamp(22px, 2.4vw, 28px); }
+.hiring-box p { margin: 0; max-width: 70ch; color: var(--body); font-size: 15px; line-height: 1.68; }
+.hiring-actions { display: grid; gap: 10px; justify-items: stretch; }
+
 /* ============================ Tablet ================================== */
 @media (max-width: 980px) {
   .hero { grid-template-columns: 1fr; min-height: auto; }
@@ -876,6 +934,8 @@ footer {
   .founder { grid-template-columns: 130px 1fr; }
   .founder img { width: 130px; }
   .founder .button { grid-column: 2; justify-self: start; }
+  .hiring-box { grid-template-columns: 1fr; gap: 22px; }
+  .hiring-actions { justify-items: start; }
 }
 
 /* ============================= Mobile ================================= */
@@ -886,6 +946,9 @@ footer {
   .brand small { display: none; }
 
   .hero { gap: 48px; padding: 65px 0 78px; }
+  .hero-price { font-size: 13px; }
+  .hiring-box { padding: 24px 20px; }
+  .hiring-actions { justify-items: stretch; }
   .hero h1 { font-size: clamp(38px, 11vw, 56px); }
   .hero-copy { font-size: 16px; }
 
