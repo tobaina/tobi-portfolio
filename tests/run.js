@@ -333,6 +333,50 @@ function serve() {
     await ctx.close();
   }
 
+  // -------------------------------------------- price, hiring, walkthrough
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const r = await page.evaluate(() => {
+      const w = document.getElementById('walkthrough');
+      const video = document.getElementById('walkthrough-video');
+      const hiring = document.getElementById('hiring');
+      const price = document.querySelector('.hero-price');
+      const heroBottom = (document.querySelector('.hero-text') || {}).getBoundingClientRect
+        ? document.querySelector('.hero-text').getBoundingClientRect().bottom : 0;
+      return {
+        // The walkthrough must be invisible AND inert until a file is named.
+        walkthroughPresent: !!w,
+        walkthroughHidden: !!w && w.hidden,
+        walkthroughDeclaresNoFile: !!w && !(w.getAttribute('data-video') || '').trim(),
+        walkthroughHasNoSource: !!video && video.querySelectorAll('source').length === 0,
+        walkthroughHasNoPoster: !!video && !video.getAttribute('poster'),
+        // The second audience is addressed, and can act on it.
+        hiringPresent: !!hiring,
+        hiringLinks: hiring ? [...hiring.querySelectorAll('a')].map(a => a.getAttribute('href')) : [],
+        // A price is visible without scrolling past the hero.
+        priceInHero: !!price && price.getBoundingClientRect().top < heroBottom + 1,
+        priceText: price ? price.textContent : '',
+      };
+    });
+
+    check('walkthrough section exists', r.walkthroughPresent);
+    check('walkthrough stays hidden while no file is named', r.walkthroughHidden && r.walkthroughDeclaresNoFile);
+    check('hidden walkthrough loads no media', r.walkthroughHasNoSource && r.walkthroughHasNoPoster);
+    check('hiring section exists', r.hiringPresent);
+    check('hiring offers LinkedIn and email',
+      r.hiringLinks.some(h => /linkedin\.com/.test(h || '')) &&
+      r.hiringLinks.some(h => /^mailto:/.test(h || '')),
+      r.hiringLinks.join(' | '));
+    check('a price is shown in the hero', r.priceInHero);
+    check('the hero price names a real currency amount', /CA\$\s?\d/.test(r.priceText), r.priceText.slice(0, 80));
+    check('the hero price matches the pricing section',
+      /CA\$500/.test(r.priceText), r.priceText.slice(0, 80));
+    await ctx.close();
+  }
+
   // ----------------------------------------------------- structured data
   {
     const ctx = await browser.newContext();
