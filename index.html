@@ -481,6 +481,21 @@
               <p class="field-error" id="cf-message-error" hidden></p>
             </div>
 
+            <!-- ⚠️  UNTICKED, OPTIONAL, AND SEPARATE FROM SENDING THE MESSAGE.
+                 Sending an enquiry is not consent to be marketed to, and
+                 quietly adding an enquirer to a list is the move that makes
+                 people stop trusting a sender. Canadian anti-spam law wants
+                 express, unbundled consent; this is that box and nothing
+                 else. It must never be pre-ticked, never be required, and
+                 never be merged into the send button. -->
+            <div class="consent">
+              <input id="cf-subscribe" name="subscribe" type="checkbox" aria-describedby="cf-subscribe-note">
+              <div>
+                <label for="cf-subscribe">Send me occasional notes on operations systems</label>
+                <p class="consent-note" id="cf-subscribe-note">What I build, what breaks, what I would do differently. Unsubscribe any time. Leave this unticked and I will only reply to your message.</p>
+              </div>
+            </div>
+
             <!-- Left empty by people, filled in by bots. -->
             <div class="trap" aria-hidden="true">
               <label for="cf-company">Company</label>

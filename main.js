@@ -156,7 +156,10 @@
         name: form.elements.name.value.trim(),
         email: form.elements.email.value.trim(),
         message: form.elements.message.value.trim(),
-        company: form.elements.company.value.trim()
+        company: form.elements.company.value.trim(),
+        // Sent as a boolean, read from the box itself. Never defaulted to
+        // true anywhere in this file, on the server, or in a test fixture.
+        subscribe: Boolean(form.elements.subscribe && form.elements.subscribe.checked)
       };
 
       var errors = validate(values);
