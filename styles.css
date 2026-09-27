@@ -127,6 +127,19 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
   font-size: 12px;
 }
 .notice b { color: var(--ink); }
+/* The announcement now carries the only call to action above the header, so it
+   has to be reachable by touch as well as readable. Inline padding grows the
+   hit box without moving the line. */
+.notice a {
+  display: inline-block;
+  padding: 3px 2px;
+  color: var(--blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+.notice a:hover { text-decoration: underline; }
+.notice .arrow { display: inline-block; transition: transform .16s ease; }
+.notice a:hover .arrow { transform: translateX(3px); }
 
 /* ----------------------------- Navigation ------------------------------ */
 .nav {
@@ -219,6 +232,9 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
   font-weight: 600;
   letter-spacing: .16em;
   text-transform: uppercase;
+  /* Two even lines rather than a full line plus one orphaned word. Ignored by
+     browsers that do not support it, which wrap exactly as they did before. */
+  text-wrap: balance;
 }
 .hero h1 {
   max-width: 620px;
@@ -591,7 +607,44 @@ section { padding: 110px 0; }
   line-height: 1.35;
 }
 .pcard .button { margin-top: auto; align-self: flex-start; }
+/* Sits on the dark case-study panel, so it takes the on-navy text colours. */
+.case-more {
+  margin: 34px 0 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--navy-line);
+  color: var(--on-navy-soft);
+  font-size: 13.5px;
+  line-height: 1.62;
+}
+.case-more a {
+  color: var(--on-navy-blue);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.case-more a:hover { text-decoration: underline; }
+
+.pcard-proves {
+  margin: 0 0 10px;
+  color: var(--blue);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 .product-note { margin: 22px 0 0; color: var(--muted); font-size: 13px; }
+
+/* Plain guidance, not a highlighted box: it must not compete with the founding
+   note below it, and two tinted panels in a row stop either being read. */
+.price-note {
+  max-width: 74ch;
+  margin: 22px 0 0;
+  color: var(--body);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.price-note b { color: var(--ink); }
 
 /* ------------------------- Founding engagement ------------------------- */
 /* A note under the prices, not a second half of the section. */
@@ -643,6 +696,33 @@ section { padding: 110px 0; }
 .service-graphic i { color: var(--blue); font-style: normal; }
 .service h3 { margin: 0 0 8px; font-size: 21px; }
 .service p { margin: 0; color: var(--body); font-size: 13px; }
+
+/* ── Other ways I can help ────────────────────────────────────────────────
+   Deliberately a different, lighter shape from the three cards above. If these
+   four were styled as equal cards the section would read as seven services of
+   equal weight, which is the "will do anything" look the three-card layout
+   exists to avoid. Plain text on the section background, no borders, no
+   numbers, no graphics. */
+.service-more { margin-top: 42px; padding-top: 30px; border-top: 1px solid var(--line); }
+.service-more-head {
+  margin: 0 0 20px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.service-minor-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.service-minor h4 { margin: 0 0 6px; color: var(--ink); font-size: 15px; font-weight: 600; }
+.service-minor p { margin: 0; color: var(--body); font-size: 13px; line-height: 1.6; }
 
 /* ------------------------------- Pricing ------------------------------- */
 .engagement { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -769,6 +849,8 @@ section { padding: 110px 0; }
 }
 .contact-copy h2 { margin-bottom: 18px; }
 
+.founder-note { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
 .contact-alt { margin-top: 20px; font-size: 13px; color: #e8f1ff; }
 .contact-alt a { font-weight: 600; }
 
@@ -790,7 +872,8 @@ section { padding: 110px 0; }
   letter-spacing: .01em;
 }
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   padding: 12px 14px;
   border: 1px solid #cfd8e6;
@@ -801,11 +884,27 @@ section { padding: 110px 0; }
   font-size: 15px;
   line-height: 1.5;
 }
+/* The native control is kept and only re-skinned: the chevron is drawn here
+   because removing the appearance removes the platform one too, and a select
+   with no affordance at all reads as a disabled text box. `background-image`
+   rather than a pseudo-element, since a replaced element has no ::after. */
+.field select {
+  height: 46px;
+  padding-right: 38px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%234e5663' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
+}
 .field textarea { min-height: 110px; resize: vertical; }
 .field input:hover,
-.field textarea:hover { border-color: #aebdd2; }
+.field textarea:hover,
+.field select:hover { border-color: #aebdd2; }
 .field input:focus,
-.field textarea:focus { border-color: var(--blue); }
+.field textarea:focus,
+.field select:focus { border-color: var(--blue); }
 
 .field-hint { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
 .field-error { margin: 7px 0 0; color: #b42318; font-size: 12px; font-weight: 500; }
@@ -906,6 +1005,20 @@ footer {
   font-size: 13.5px;
   line-height: 1.62;
 }
+/* The two routes, named directly under the buttons. Mono and wide-tracked so
+   it reads as a label rather than a fourth sentence of body copy. */
+.hero-services {
+  margin: 20px 0 0;
+  text-wrap: balance;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.hero-services i { margin: 0 7px; color: var(--blue); font-style: normal; }
+
 .hero-price b { color: var(--ink); }
 .hero-price a { color: var(--blue); font-weight: 600; }
 
@@ -957,6 +1070,7 @@ footer {
   .section-head { grid-template-columns: 1fr; gap: 13px; }
   .case-grid, .engagement { grid-template-columns: 1fr; }
   .service-grid { grid-template-columns: 1fr 1fr; }
+  .service-minor-grid { grid-template-columns: 1fr 1fr; gap: 22px; }
   .product-grid { grid-template-columns: 1fr; }
   .ba { grid-template-columns: 1fr; gap: 12px; }
   .ba-arrow { height: 34px; }
@@ -978,6 +1092,10 @@ footer {
 
   .hero { gap: 48px; padding: 65px 0 78px; }
   .hero-price { font-size: 13px; }
+  .hero-services { font-size: 10px; letter-spacing: .1em; }
+  .hero-services i { margin: 0 5px; }
+  .service-minor-grid { grid-template-columns: 1fr; gap: 20px; }
+  .service-more { margin-top: 32px; padding-top: 24px; }
   .hiring-box { padding: 24px 20px; }
   .hiring-actions { justify-items: stretch; }
   .hero h1 { font-size: clamp(38px, 11vw, 56px); }

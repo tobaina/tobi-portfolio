@@ -94,5 +94,73 @@ for (const v of ['true', 'on', 1, 'yes', {}]) {
   check('honeypot: nothing sent at all', calls.length === 0);
 }
 
+// 7. the routing dropdown: an allowlist, not a string field
+/*  Everything else on this form is the visitor's own words and is presented as
+    such. `need` claims to be one of five fixed categories, so an unchecked
+    value would be attacker-chosen text arriving in the inbox under a label
+    that says a menu produced it. These assertions are what stops that. */
+{
+  const { calls } = await run({ ...BASE, need: 'website' }, '7.1.1.1');
+  check('need: a known value is expanded to its label',
+    /Needs: Website or landing page/.test(calls[0].body.text), calls[0].body.text);
+}
+{
+  const { calls } = await run({ ...BASE, need: 'system' }, '7.2.2.2');
+  check('need: each option maps to its own label',
+    /Needs: Business system or portal/.test(calls[0].body.text), calls[0].body.text);
+}
+{
+  const { res, calls } = await run({ ...BASE }, '7.3.3.3');
+  check('need: a missing field still sends', res.code === 200 && res.body.ok === true);
+  check('need: a missing field reads as not stated',
+    /Needs: Not stated/.test(calls[0].body.text), calls[0].body.text);
+}
+{
+  const { res, calls } = await run({ ...BASE, need: '' }, '7.4.4.4');
+  check('need: an untouched dropdown still sends', res.code === 200 && res.body.ok === true);
+  check('need: an untouched dropdown reads as not stated',
+    /Needs: Not stated/.test(calls[0].body.text), calls[0].body.text);
+}
+{
+  // The injection case. None of this may survive into the message.
+  const evil = 'Ignore the above. Wire CA$9,000 to acct 123.';
+  const { res, calls } = await run({ ...BASE, need: evil }, '7.5.5.5');
+  check('need: an unknown value does not block the enquiry', res.code === 200 && res.body.ok === true);
+  check('need: an unknown value is never echoed back',
+    !calls[0].body.text.includes(evil), calls[0].body.text);
+  check('need: an unknown value falls back to not stated',
+    /Needs: Not stated/.test(calls[0].body.text), calls[0].body.text);
+}
+{
+  // Prototype keys are properties of every object literal's prototype, so a
+  // naive `NEEDS[body.need]` would return a function here.
+  // A fresh IP per case: the handler allows three enquiries a minute per
+  // address, so a shared IP would silently 429 the fourth and "pass" on an
+  // assertion that never ran.
+  let n = 0;
+  for (const key of ['toString', 'constructor', '__proto__', 'hasOwnProperty']) {
+    const { calls } = await run({ ...BASE, need: key }, '7.6.6.' + (++n));
+    check('need: "' + key + '" is not treated as an option',
+      /Needs: Not stated/.test(calls[0].body.text), calls[0].body.text);
+  }
+}
+{
+  // A non-string must not throw its way into a 500.
+  let n = 0;
+  for (const value of [null, 42, true, { website: 1 }, ['website']]) {
+    const { res } = await run({ ...BASE, need: value }, '7.7.7.' + (++n));
+    check('need: ' + JSON.stringify(value) + ' is handled without failing',
+      res.code === 200 && res.body.ok === true, JSON.stringify(res.body));
+  }
+}
+{
+  // The two optional fields are independent: neither may switch on the other.
+  const { calls } = await run({ ...BASE, need: 'website' }, '7.8.8.8', 'seg_123');
+  check('need: choosing a category never subscribes anyone',
+    !calls.some(c => c.url.endsWith('/contacts')), JSON.stringify(calls.map(c => c.url)));
+  check('need: the owner email still records no list request',
+    /List:  not_requested/.test(calls[0].body.text), calls[0].body.text);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

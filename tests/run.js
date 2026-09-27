@@ -456,6 +456,149 @@ function serve() {
     await ctx.close();
   }
 
+  // --------------------------------------------- two routes through the page
+  /* The page has one job that the old copy quietly failed: a visitor who wants
+     a website has to be able to recognise themselves. These assertions are the
+     ones that break if someone later edits the page back into an
+     operations-only pitch without meaning to. */
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const r = await page.evaluate(() => {
+      const text = el => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
+      const priceRows = [...document.querySelectorAll('.price-row')].map(row => ({
+        title: text(row.querySelector('h3')),
+        amount: text(row.querySelector('strong')),
+      }));
+      return {
+        notice: text(document.querySelector('.notice')),
+        noticeLinksToContact: !!document.querySelector('.notice a[href="#contact"]'),
+        navLabels: [...document.querySelectorAll('.nav-links a')].map(a => text(a)),
+        heroCopy: text(document.querySelector('.hero-copy')),
+        heroServices: text(document.querySelector('.hero-services')),
+        actions: [...document.querySelectorAll('.actions .button')]
+          .map(a => ({ label: text(a), href: a.getAttribute('href') })),
+        caseMoreHref: (document.querySelector('.case-more a') || {}).getAttribute
+          ? document.querySelector('.case-more a').getAttribute('href') : null,
+        caseDepthLabel: text(document.querySelector('.case-depth span')),
+        provesCount: document.querySelectorAll('.pcard-proves').length,
+        productCount: document.querySelectorAll('.pcard').length,
+        getpolishaCard: text([...document.querySelectorAll('.pcard')]
+          .find(c => /GetPolisha/.test(text(c.querySelector('h3')))) || null),
+        minorServices: [...document.querySelectorAll('.service-minor h4')].map(h => text(h)),
+        priceRows,
+        priceNote: text(document.querySelector('.price-note')),
+        founding: text(document.querySelector('.founding')),
+        bodyText: document.body.innerText.replace(/\s+/g, ' '),
+      };
+    });
+
+    // The announcement must invite both kinds of work and must not date itself.
+    check('announcement names website work', /website/i.test(r.notice), r.notice);
+    check('announcement carries no expiring date',
+      !/this quarter|this month|this year/i.test(r.notice), r.notice);
+    check('announcement links to the contact form', r.noticeLinksToContact);
+
+    check('navigation says Services', r.navLabels.includes('Services'), r.navLabels.join(' | '));
+
+    // The hero must speak to a website buyer as well as an operations buyer.
+    check('hero copy offers website work', /website|online presence/i.test(r.heroCopy), r.heroCopy.slice(0, 120));
+    check('hero names the service routes',
+      /Websites/i.test(r.heroServices) && /Automation/i.test(r.heroServices), r.heroServices);
+    check('hero offers a contact and a work route',
+      r.actions.some(a => a.href === '#contact') && r.actions.some(a => a.href === '#work'),
+      JSON.stringify(r.actions));
+
+    // Engineering depth is kept, but it is no longer the first thing said.
+    check('implementation figures are labelled as depth, not as the result',
+      /behind the system/i.test(r.caseDepthLabel), r.caseDepthLabel);
+    check('the case study offers a route to smaller work', r.caseMoreHref === '#services');
+
+    // Each live product says what it proves.
+    check('every product card says what it proves',
+      r.productCount > 0 && r.provesCount === r.productCount,
+      r.provesCount + ' of ' + r.productCount);
+
+    /* ⚠️  ACCURACY, NOT COPY. getpolisha.com tells its own customers that a
+       person completes every rewrite. The portfolio must not imply the
+       rewriting is automated, whatever else it claims about the workflow. */
+    check('the GetPolisha card does not claim an automated rewrite',
+      !/automated (profile )?(rewrit|writing)/i.test(r.getpolishaCard), r.getpolishaCard.slice(0, 200));
+    check('the GetPolisha card says a person does the rewriting',
+      /by a person/i.test(r.getpolishaCard), r.getpolishaCard.slice(0, 200));
+
+    // The wider offer exists, and stays secondary.
+    check('secondary services are listed', r.minorServices.length === 4, r.minorServices.join(' | '));
+    check('secondary services include website work',
+      r.minorServices.some(t => /website/i.test(t)), r.minorServices.join(' | '));
+
+    // Pricing: four paths, and a website is not forced through a fixed price.
+    check('pricing offers four paths', r.priceRows.length === 4,
+      r.priceRows.map(x => x.title).join(' | '));
+    const website = r.priceRows.find(x => /website|focused project/i.test(x.title));
+    check('a website path exists in pricing', !!website,
+      r.priceRows.map(x => x.title).join(' | '));
+    check('the website path is quoted rather than fixed-priced',
+      !!website && !/CA\$/.test(website.amount), website ? website.amount : '');
+    check('the diagnostic is still CA$500',
+      r.priceRows.some(x => /diagnostic/i.test(x.title) && /CA\$500/.test(x.amount)));
+    check('the build range is stated once and consistently',
+      r.priceRows.some(x => /CA\$3,500.6,000/.test(x.amount)),
+      r.priceRows.map(x => x.amount).join(' | '));
+    check('no contradictory build range survives anywhere on the page',
+      !/CA\$2,500.6,000/.test(r.bodyText));
+    check('pricing explains that the diagnostic is optional',
+      /do not need the diagnostic/i.test(r.priceNote), r.priceNote.slice(0, 120));
+
+    /* The founding offer may exist, but it must be bounded and must never be
+       sold in exchange for a review. */
+    check('the founding offer states what it covers',
+      /first-phase|first phase/i.test(r.founding), r.founding.slice(0, 160));
+    check('the founding price is not conditional on a testimonial',
+      !/testimonial|review/i.test(r.founding), r.founding.slice(0, 200));
+
+    await ctx.close();
+  }
+
+  // ------------------------------------------------ contact form routing field
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const r = await page.evaluate(() => {
+      const select = document.getElementById('cf-need');
+      const label = document.querySelector('label[for="cf-need"]');
+      const heading = document.querySelector('.contact-copy h2');
+      const messageLabel = document.querySelector('label[for="cf-message"]');
+      return {
+        present: !!select,
+        labelled: !!label && label.textContent.trim().length > 0,
+        required: !!select && select.hasAttribute('required'),
+        defaultValue: select ? select.value : null,
+        options: select ? [...select.options].map(o => o.value) : [],
+        hasUnsure: select ? [...select.options].some(o => /not sure/i.test(o.textContent)) : false,
+        heading: heading ? heading.textContent.trim() : '',
+        messageLabel: messageLabel ? messageLabel.textContent.trim() : '',
+      };
+    });
+
+    check('the enquiry names a routing field', r.present);
+    check('the routing field has a real label', r.labelled);
+    // Somebody who does not know what they need must still be able to send.
+    check('the routing field is optional', r.present && !r.required);
+    check('the routing field starts unanswered', r.defaultValue === '', String(r.defaultValue));
+    check('the routing field offers a "not sure" answer', r.hasUnsure);
+    check('the contact heading welcomes both kinds of work',
+      /build or improve/i.test(r.heading), r.heading);
+    check('the message box asks for now-and-next, not only what is broken',
+      /what you have now/i.test(r.messageLabel), r.messageLabel);
+
+    await ctx.close();
+  }
+
   // ----------------------------------------------------- structured data
   {
     const ctx = await browser.newContext();
