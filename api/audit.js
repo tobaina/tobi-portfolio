@@ -106,11 +106,6 @@ function plainResult(result, answers) {
       lines.push("  " + (i + 1) + ". " + o.fix + " — about " + o.hours + "h a week");
     });
   }
-  if (result.human.length) {
-    lines.push("");
-    lines.push("WHAT SHOULD STAY HUMAN");
-    result.human.forEach((h) => lines.push("  - " + h));
-  }
   lines.push("");
   lines.push(result.verdict.headline.toUpperCase());
   lines.push(result.verdict.body);
@@ -170,6 +165,7 @@ module.exports = async function handler(req, res) {
     "Email:   " + email + "\n" +
     "Hours:   " + result.hours + "\n" +
     "Verdict: " + result.verdict.key + "\n" +
+    "Team:    " + (result.team || "Not stated") + "\n" +
     "List:    " + (subscribe ? "requested" : "not requested") + "\n" +
     (mismatch ? "⚠ Client reported " + claimed + "h; recomputed " + result.hours + "h.\n" : "") +
     "\n" + summary + "\n\n" +
