@@ -304,5 +304,63 @@ for (const v of ['true', 'on', 1, 'yes', {}]) {
     JSON.stringify(body));
 }
 
+/* 9. how the body actually arrives
+
+   ⚠️  EVERY OTHER TEST IN THIS FILE HANDS THE HANDLER A PLAIN OBJECT, which
+   is only one of the two shapes readBody() is written for. Vercel delivers
+   req.body as a STRING for some content types and runtimes, and the string
+   branch -- including its JSON.parse failure path -- had no coverage at all.
+   A malformed or missing body must come back as an ordinary validation
+   error, never as a crash: a 500 here is an enquiry silently lost, and the
+   visitor sees a generic failure with no idea their message never left. */
+{
+  const okFetch = async () => ({ ok: true, status: 200, text: async () => '' });
+  const direct = async (body, ip) => {
+    delete process.env.RESEND_SEGMENT_ID;
+    handler.__resetSegmentCacheForTests();
+    const calls = [];
+    global.fetch = async (url, o = {}) => { calls.push({ url, body: o.body }); return okFetch(); };
+    const res = mkRes();
+    await handler({ method: 'POST', body, headers: { 'x-forwarded-for': ip }, socket: {} }, res);
+    return { res, calls };
+  };
+
+  {
+    const { res, calls } = await direct(JSON.stringify({ ...BASE }), '9.1.1.1');
+    check('a JSON string body is parsed and accepted', res.code === 200 && res.body.ok === true,
+      JSON.stringify(res.body));
+    check('a JSON string body still sends the notification',
+      calls.some(c => String(c.url).endsWith('/emails')));
+  }
+  {
+    const { res } = await direct('{"name":"broken",', '9.2.2.2');
+    check('a malformed body is a validation error, not a crash',
+      res.code === 400 && res.body.ok === false, res.code + ' ' + JSON.stringify(res.body));
+    check('a malformed body names the missing fields',
+      !!res.body.errors && !!res.body.errors.name && !!res.body.errors.email,
+      JSON.stringify(res.body.errors));
+  }
+  {
+    const { res } = await direct(undefined, '9.3.3.3');
+    check('a missing body is a validation error, not a crash',
+      res.code === 400 && res.body.ok === false, res.code + ' ' + JSON.stringify(res.body));
+  }
+  {
+    // The honeypot has to work on the string path too, or the trap is only
+    // half present and bots that send text/plain walk straight through.
+    const { res, calls } = await direct(JSON.stringify({ ...BASE, website: 'bot' }), '9.4.4.4');
+    check('the honeypot still catches a bot on the string path',
+      res.code === 200 && res.body.ok === true && calls.length === 0,
+      'calls=' + calls.length);
+  }
+  {
+    const res = mkRes();
+    await handler({ method: 'GET', headers: {}, socket: {} }, res);
+    check('a GET is refused with 405 and an Allow header',
+      res.code === 405 && res.headers.Allow === 'POST',
+      res.code + ' ' + JSON.stringify(res.headers));
+  }
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
