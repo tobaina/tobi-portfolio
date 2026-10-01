@@ -193,7 +193,21 @@
           <a class="button primary" href="#contact" data-need="check" data-track="hero_process_check">Book a free 30 minute process check <span class="arrow" aria-hidden="true">&rarr;</span></a>
           <a class="button secondary" href="/audit" data-track="hero_audit">Take the free workflow audit</a>
         </div>
-        <p class="hero-services"><span>Websites</span> <span>CRM</span> <span>ERP style systems</span> <span>Portals</span> <span>Automation</span></p>
+        <!-- ⚠️  A REAL LIST, NOT A SENTENCE OF SPANS, AND THAT IS NOT COSMETIC.
+             As a flex row of spans the browser collapsed the whitespace between
+             items, so the text content of this element read literally as
+             "WebsitesCRMERP style systemsPortalsAutomation". That is what a
+             screen reader announced and what landed on the clipboard. A <ul>
+             is announced as "list, five items" with each read separately, and
+             copies with the items intact. Keep each <li> on its own line so the
+             whitespace survives in textContent too. -->
+        <ul class="hero-services">
+          <li>Websites</li>
+          <li>CRM</li>
+          <li>ERP style systems</li>
+          <li>Portals</li>
+          <li>Automation</li>
+        </ul>
         <ul class="checks">
           <li><i aria-hidden="true">&#10003;</i>Fixed scope</li>
           <li><i aria-hidden="true">&#10003;</i>Written handover</li>
