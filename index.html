@@ -84,6 +84,17 @@
         "itemListElement": [
           {
             "@type": "Offer",
+            "name": "Operations Diagnostic",
+            "price": "400",
+            "priceCurrency": "CAD",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Operations Diagnostic",
+              "description": "A working session across your whole process and a written document you keep. Credited in full against a build started within 30 days."
+            }
+          },
+          {
+            "@type": "Offer",
             "name": "Website",
             "price": "1200",
             "priceCurrency": "CAD",
@@ -102,6 +113,39 @@
               "@type": "Service",
               "name": "Business system",
               "description": "CRMs, client and staff portals, approval flows, dashboards and automation, from CA$4,800."
+            }
+          },
+          {
+            "@type": "Offer",
+            "name": "Website care",
+            "price": "120",
+            "priceCurrency": "CAD",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Website care",
+              "description": "Monthly website support: uptime, updates, backups and an hour of edits. Response within 3 working days."
+            }
+          },
+          {
+            "@type": "Offer",
+            "name": "System care",
+            "price": "450",
+            "priceCurrency": "CAD",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "System care",
+              "description": "Monthly system support: monitoring, fixes, user questions and two hours of changes. Response the next working day."
+            }
+          },
+          {
+            "@type": "Offer",
+            "name": "System partner",
+            "price": "1200",
+            "priceCurrency": "CAD",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "System partner",
+              "description": "Monthly system partnership: a standing half day a week, monthly review and a prioritised backlog. Same day response."
             }
           }
         ]
@@ -128,6 +172,7 @@
       <a href="#problems">Problems we solve</a>
       <a href="#how">How it works</a>
       <a href="#work">Our work</a>
+      <a href="#pricing">Pricing</a>
       <a class="nav-cta" href="#contact" data-track="nav_contact">Get in touch</a>
     </div>
   </nav>
@@ -163,7 +208,7 @@
              opens with budget instead of the problem.
              It must agree with the offer catalogue in the structured data
              above. Change one, change both. -->
-        <p class="hero-price">Most projects start from <b>CA$1,200</b> for a website and <b>CA$4,800</b> for a business system, always quoted in writing before anything starts.</p>
+        <p class="hero-price">Most projects start from <b>CA$1,200</b> for a website and <b>CA$4,800</b> for a business system, always quoted in writing before anything starts. <a href="#pricing" data-track="hero_pricing">See pricing</a></p>
       </div>
 
       <figure class="product">
@@ -271,7 +316,78 @@
           <h3>You own it</h3>
           <p>Written handover, your accounts, your code, your design files, and 30 days of fixes included.</p>
         </li>
+        <li class="flow-step">
+          <span class="flow-num" aria-hidden="true">5</span>
+          <h3>We keep improving it</h3>
+          <p>A system earns its keep by changing as the business does. Support and change work are priced below, and start when the included 30 days end.</p>
+        </li>
       </ol>
+    </div>
+  </section>
+
+  <!-- ============================= The offer =============================
+       ⚠️  THIS SECTION IS THE CONVERSION, NOT THE PRICING SECTION BELOW.
+       The free check is a conversation; this is the first thing anybody buys,
+       and it is the paid form of the one process we are genuinely good at.
+       It was missing entirely for a day: the pricing table was cut and the
+       diagnostic went with it, which left the strongest asset on this page
+       being given away with nothing to buy afterwards.
+
+       The guarantee is written as a number and a definition on purpose. A
+       vague promise to "find savings" is an argument waiting to happen. Five
+       hours, each documented with the task, the tool and how it goes, is a
+       thing either delivered or not. Do not soften it into adjectives. -->
+  <section class="section offer-section" id="diagnostic">
+    <div class="shell">
+      <div class="section-head">
+        <p class="section-label">Before anything is built</p>
+        <div class="section-copy">
+          <h2>Start with a diagnostic, not a quote.</h2>
+          <p>Anyone can quote for a system. The harder and more useful work is finding out where your time actually goes first, and we charge for that rather than giving it away as a sales call.</p>
+        </div>
+      </div>
+
+      <div class="offer-grid">
+        <div class="offer-card">
+          <div class="offer-head">
+            <h3>Operations Diagnostic</h3>
+            <strong>CA$400</strong>
+          </div>
+          <p class="offer-lead">A working session across your whole process, and a written document you keep.</p>
+          <ul class="offer-list">
+            <li><i aria-hidden="true">&#10003;</i><span>A map of how your work runs today</span></li>
+            <li><i aria-hidden="true">&#10003;</i><span>The bottlenecks and the repeated work we found</span></li>
+            <li><i aria-hidden="true">&#10003;</i><span>Automation opportunities, each with its trigger and expected result</span></li>
+            <li><i aria-hidden="true">&#10003;</i><span>The points where a person must stay in the loop</span></li>
+            <li><i aria-hidden="true">&#10003;</i><span>A proposed future workflow and the tools it needs</span></li>
+            <li><i aria-hidden="true">&#10003;</i><span>Clear next steps, priced</span></li>
+          </ul>
+          <p class="offer-terms"><b>Credited in full</b> against a build started within 30 days.</p>
+          <p class="offer-guarantee"><b>If we do not find at least 5 hours a week of recoverable time, you pay nothing.</b> Each hour is documented with the task, the tool it happens in, and how it would be removed.</p>
+          <a class="button primary" href="#contact" data-need="diagnostic" data-track="offer_diagnostic">Book the diagnostic <span class="arrow" aria-hidden="true">&rarr;</span></a>
+          <p class="offer-alt">Not ready for that? The <a href="#contact" data-need="check" data-track="offer_free_check">free 30 minute process check</a> covers one process and costs nothing.</p>
+        </div>
+
+        <!-- ⚠️  THE TRUST BLOCK, AND THE ONLY PLACE "AI" APPEARS ON THIS PAGE.
+             The word was banned outright for a long time, because "we use AI"
+             is noise that cheapens everything around it. It is allowed here
+             and only here, because here it is doing work: naming the thing we
+             refuse to let it decide is the opposite of a hype claim, and it
+             is what a cautious owner needs to hear before they will let a
+             system near their customers. If it ever appears as a standalone
+             boast anywhere on this site, that is the rule being broken. -->
+        <div class="boundaries">
+          <h3>What we will not automate</h3>
+          <p>Deciding this is part of the work, and we agree it in writing before anything is built.</p>
+          <ul class="boundary-list">
+            <li>Anything that commits money or signs a contract</li>
+            <li>Exceptions, complaints and anything already going wrong</li>
+            <li>Decisions that turn on judgement about a person</li>
+            <li>Anything you tell us must always have a human on it</li>
+          </ul>
+          <p class="boundaries-note">Where an AI assistant helps, it drafts and suggests. A person approves anything that matters.</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -279,10 +395,15 @@
   <section class="case" id="work">
     <div class="shell">
       <div class="section-head">
-        <p class="section-label">Flagship build &middot; Direct Apply</p>
+        <p class="section-label">Our own system &middot; Direct Apply</p>
         <div class="section-copy">
           <h2>One controlled system instead of scattered tools.</h2>
-          <p>A working operations CRM with separate client, team and administrator experiences. Personal information is blurred in every screen below.</p>
+          <!-- ⚠️  SAY WHOSE SYSTEM THIS IS. Our own documentation calls Direct
+               Apply an internal system, while this section was headed
+               "Flagship build", which a visitor reads as client work. The
+               honest framing is also the stronger one: a client case study
+               can only be described, and this one can be opened. -->
+          <p>An operations CRM we designed, built and run ourselves, with separate client, team and administrator experiences. Because it is ours, we can show you the inside of it rather than describe it. Personal information is blurred in every screen below.</p>
         </div>
       </div>
 
@@ -359,6 +480,28 @@
           <p class="caption" id="gallery-caption" aria-live="polite"><b>Capacity:</b> approved workload and available client slots, enforced by the database.</p>
         </div>
       </div>
+
+      <!-- ⚠️  PROOF OF RANGE THAT NEEDS NO NEW CLIENT WORK TO BE TRUE.
+           Every one of these was built and is running in the system above, so
+           none of it is a capability claim we cannot stand behind. This is
+           also the honest answer to "have you done anything like mine": we
+           have not built your business, but we have built these ten parts.
+           Nothing goes in this list that is not already running. -->
+      <div class="patterns">
+        <h3>Ten parts of it we reuse</h3>
+        <ul class="pattern-list">
+          <li>Form to CRM onboarding</li>
+          <li>Document extraction</li>
+          <li>Automatic assignment</li>
+          <li>Approval workflows</li>
+          <li>Reminders and follow ups</li>
+          <li>Client portals</li>
+          <li>Operational dashboards</li>
+          <li>Audit trails</li>
+          <li>Role based access</li>
+          <li>Exception handling</li>
+        </ul>
+      </div>
     </div>
   </section>
 
@@ -418,6 +561,68 @@
           </div>
         </article>
       </div>
+    </div>
+  </section>
+
+  <!-- =============================== Pricing =============================
+       ⚠️  THIS IS NOT THE OLD PRICING TABLE AND MUST NOT GROW BACK INTO IT.
+       The table this replaces ran 391 words over nearly two screens, the
+       largest block on a page whose problem was length. What survived is the
+       part that does work: a floor that filters out a budget of a few hundred
+       dollars, and a support ladder that makes the ongoing relationship a
+       product rather than an afterthought.
+
+       ⚠️  EVERY TIER STATES A RESPONSE TIME, AND THAT IS THE POINT.
+       What a client buys in a retainer is being able to reach us, not a
+       number of hours. A tier without a response time is a subscription to
+       nothing. CA$450 is the floor for a system because it is the lowest
+       number at which "next working day" is an honest promise: below it we
+       would be taking money to be unavailable.
+
+       ⚠️  WEBSITE CARE AND SYSTEM CARE ARE DIFFERENT PRODUCTS.
+       One ladder for both was the original mistake. If a website goes down a
+       client loses a day of enquiries; if the system running their operations
+       goes down, their business stops. Do not merge these rows again.
+
+       Every figure here must also appear in the offer catalogue in the
+       structured data at the top of this file, and the test suite holds an
+       allowlist of exactly these amounts. Change a price, change all three. -->
+  <section class="section pricing" id="pricing">
+    <div class="shell">
+      <div class="section-head">
+        <p class="section-label">What it costs</p>
+        <div class="section-copy">
+          <h2>Priced in writing, before anything starts.</h2>
+          <p>Fixed prices where the work is predictable and a floor where it is not. Nothing here is a package you have to squeeze into.</p>
+        </div>
+      </div>
+
+      <div class="price-cols">
+        <div class="price-col">
+          <h3 class="price-col-head">To build it</h3>
+          <div class="price-line"><span>Website</span><strong>from CA$1,200</strong></div>
+          <div class="price-line"><span>Business system</span><strong>from CA$4,800</strong></div>
+          <p class="price-note">One workflow live first, fixed scope, quoted in writing. Thirty days of fixes included. <b>You own the code, the accounts and the design files</b>, and that is written into the proposal rather than promised in a conversation.</p>
+        </div>
+
+        <div class="price-col">
+          <h3 class="price-col-head">To keep it running</h3>
+          <div class="price-line"><span>Website care<i>Uptime, updates, backups, an hour of edits</i></span><strong>CA$120<small>/mo</small><i>3 working days</i></strong></div>
+          <div class="price-line"><span>System care<i>Monitoring, fixes, user questions, two hours of changes</i></span><strong>CA$450<small>/mo</small><i>Next working day</i></strong></div>
+          <div class="price-line"><span>System partner<i>A standing half day a week, monthly review, prioritised backlog</i></span><strong>CA$1,200<small>/mo</small><i>Same day</i></strong></div>
+          <p class="price-note">Support starts when the included thirty days end, and is agreed in the original proposal rather than sold to you later.</p>
+        </div>
+      </div>
+
+      <!-- ⚠️  A TRADE, NOT A DISCOUNT, AND DELIBERATELY SO.
+           The earlier plan was twenty per cent off the first two projects. A
+           discount trains a client to expect discounts and reads as low
+           confidence in the price. Including work at full price says the
+           opposite, costs us the same, keeps the anchor intact for everybody
+           who comes after, and names the thing we actually need right now.
+           "Two builds a month" is true: there are two of us. Never inflate a
+           scarcity claim we cannot stand behind. -->
+      <p class="founding"><b>Founding clients.</b> Full price, with the diagnostic, three months of System care and priority delivery included, in exchange for a documented case study and a testimonial. We take on two new builds a month.</p>
     </div>
   </section>
 
@@ -482,11 +687,29 @@
               <select id="cf-need" name="need">
                 <option value="" selected>Choose one</option>
                 <option value="check">Free process check</option>
+                <option value="diagnostic">Operations Diagnostic</option>
                 <option value="website">Website or landing page</option>
                 <option value="redesign">Existing website redesign</option>
                 <option value="system">Business system or portal</option>
                 <option value="automation">Automation</option>
                 <option value="unsure">Not sure yet</option>
+              </select>
+            </div>
+
+            <!-- Optional on purpose. A required budget field on a first
+                 enquiry loses the people who genuinely do not know yet, and
+                 those are often the ones a diagnostic helps most. It exists
+                 so a conversation can start qualified, not so anyone can be
+                 turned away before it starts. -->
+            <div class="field">
+              <label for="cf-budget">Rough budget <span class="field-optional">(optional)</span></label>
+              <select id="cf-budget" name="budget">
+                <option value="" selected>Choose one</option>
+                <option value="unsure">Not sure yet</option>
+                <option value="under1500">Under CA$1,500</option>
+                <option value="1500to5000">CA$1,500 to CA$5,000</option>
+                <option value="5000to15000">CA$5,000 to CA$15,000</option>
+                <option value="over15000">Over CA$15,000</option>
               </select>
             </div>
 
