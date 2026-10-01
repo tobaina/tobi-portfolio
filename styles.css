@@ -646,7 +646,7 @@ section { padding: 88px 0; }
    boundaries panel is on --navy, the pattern chips are on --blue-soft.
    Lowest pair in this block is 4.63:1. ----------------------------------- */
 .offer-section { background: var(--ice); }
-.offer-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start; }
+.offer-grid { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
 .offer-card {
   padding: 32px;
   border: 1px solid #d3deef;
@@ -664,7 +664,7 @@ section { padding: 88px 0; }
 .offer-head h3 { margin: 0; font-size: 25px; letter-spacing: -.03em; }
 .offer-head strong { font-size: 27px; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
 .offer-lead { margin: 15px 0 18px; color: var(--body); font-size: 15px; }
-.offer-list { display: grid; gap: 9px; margin: 0 0 18px; padding: 0; list-style: none; }
+.offer-list { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 26px; margin: 0 0 18px; padding: 0; list-style: none; }
 .offer-list li { display: grid; grid-template-columns: 19px 1fr; gap: 9px; align-items: start; }
 .offer-list i {
   margin-top: 1px;
@@ -675,17 +675,6 @@ section { padding: 88px 0; }
 .offer-list span { color: var(--body); font-size: 14px; line-height: 1.5; }
 .offer-terms { margin: 0 0 11px; color: var(--muted); font-size: 14px; }
 .offer-terms b { color: var(--ink); }
-.offer-guarantee {
-  margin: 0 0 20px;
-  padding: 14px 16px;
-  border-left: 3px solid var(--green);
-  border-radius: 0 var(--radius-m) var(--radius-m) 0;
-  background: #eefaf4;
-  color: #0e4d39;
-  font-size: 14px;
-  line-height: 1.55;
-}
-.offer-guarantee b { color: var(--green); }
 .offer-alt { margin: 13px 0 0; color: var(--muted); font-size: 13px; }
 .offer-alt a { color: var(--blue); font-weight: 600; }
 
@@ -705,13 +694,6 @@ section { padding: 88px 0; }
   background: rgba(255, 255, 255, .05);
   font-size: 13.5px;
   line-height: 1.45;
-}
-.boundaries-note {
-  margin: 16px 0 0;
-  padding-top: 15px;
-  border-top: 1px solid var(--navy-line);
-  color: var(--on-navy-soft);
-  font-size: 13px;
 }
 
 /* ------------------------------ Ten patterns --------------------------- */
@@ -1165,7 +1147,7 @@ footer {
   .ba-arrow::before { content: "\2193"; }
   .contact-grid { grid-template-columns: 1fr; gap: 34px; }
   .audit-cols { grid-template-columns: 1fr; }
-  .offer-grid, .price-cols { grid-template-columns: 1fr; }
+  .price-cols { grid-template-columns: 1fr; }
   .flow { grid-template-columns: 1fr 1fr; }
   .founder { grid-template-columns: 1fr; }
   .founder .button { grid-column: auto; justify-self: start; }
@@ -1207,6 +1189,7 @@ footer {
   .audit-nav { flex-direction: column-reverse; }
   .audit-nav .button { width: 100%; }
   .offer-card, .boundaries, .price-col { padding: 24px 20px; }
+  .offer-list { grid-template-columns: 1fr; }
   .offer-head { flex-direction: column; gap: 4px; }
   .price-line { grid-template-columns: 1fr; gap: 4px; }
   .price-line > strong, .price-line > strong i { text-align: left; }
