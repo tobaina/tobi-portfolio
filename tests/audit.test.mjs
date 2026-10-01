@@ -188,6 +188,14 @@ const WHO = { name: 'Test Person', email: 'p@example.com' };
     res.code === 502 && res.body.ok === false, res.code + ' ' + JSON.stringify(res.body));
 }
 {
+  /* Those two letters appear nowhere, including in the copy we email out. */
+  const { calls } = await post({ ...WHO, answers: FULL }, '5.1.1.1');
+  const sent = calls.filter(c => c.url.endsWith('/emails'));
+  check('the emailed result never names artificial intelligence',
+    sent.every(c => !/\bAI\b/.test(c.body.text)),
+    (sent.map(c => c.body.text).join(' ').match(/.{30}\bAI\b.{30}/) || [''])[0]);
+}
+{
   const res = mkRes();
   await handler({ method: 'GET', headers: {}, socket: {} }, res);
   check('a GET is refused with 405 and an Allow header',

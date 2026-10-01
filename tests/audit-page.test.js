@@ -83,6 +83,11 @@ const srv=http.createServer((q,s)=>{let u=decodeURIComponent(q.url.split('?')[0]
     /Sent/.test(await pg.innerText('#au-status')), await pg.innerText('#au-status'));
 
   check('no console or page errors', errs.length===0, errs.join(' | '));
+  {
+    const body = await pg.innerText('body');
+    check('the result page never names artificial intelligence',
+      !/\bAI\b/.test(body), (body.match(/.{30}\bAI\b.{30}/) || [''])[0]);
+  }
 
   // the honest low path
   const pg2=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();

@@ -718,8 +718,7 @@ function serve() {
         cta: !!document.querySelector('.offer-card a[data-need="diagnostic"]'),
         freeRoute: t(document.querySelector('.offer-alt')),
         cardText: t(card),
-        boundaries: t(document.querySelector('.boundaries')),
-        boundaryCount: document.querySelectorAll('.boundary-list li').length,
+        hasBoundaries: !!document.querySelector('.boundaries'),
         patterns: [...document.querySelectorAll('.pattern-list li')].map(li => t(li)),
         bodyText: document.body.innerText.replace(/\s+/g, ' '),
       };
@@ -732,37 +731,40 @@ function serve() {
     check('it credits in full against a build',
       /credited in full/i.test(o.terms) && /30 days/i.test(o.terms), o.terms);
 
-    check('the guarantee names a number of hours',
-      /5 hours a week/i.test(o.guarantee), o.guarantee);
-    check('the guarantee states the consequence plainly',
-      /you pay nothing/i.test(o.guarantee), o.guarantee);
-    /* Without this the guarantee is unfalsifiable and therefore arguable. */
-    check('the guarantee defines how an hour is evidenced',
-      /documented/i.test(o.guarantee) && /task/i.test(o.guarantee), o.guarantee);
+    /* ⚠️  THE GUARANTEE AND THE BOUNDARIES BLOCK WERE BOTH REMOVED, ON PURPOSE.
 
-    check('the diagnostic has its own call to action', o.cta);
-    check('the free route is still offered beside it',
-      /free 30 minute process check/i.test(o.freeRoute), o.freeRoute);
+       The offer briefly carried "if we do not find at least 5 hours a week of
+       recoverable time, you pay nothing", and a panel listing what we refuse
+       to automate. Both were taken out as a business decision, not an
+       oversight, so these assertions assert their ABSENCE rather than being
+       quietly deleted. The reasoning, so a future reader does not re-add them
+       by accident:
 
-    /* The trust block. This is the one place "AI" is allowed on the page,
-       and only because it is naming a limit rather than making a claim. */
-    check('the boundaries block exists',
-      /what we will not automate/i.test(o.boundaries), o.boundaries.slice(0, 80));
-    check('it names four things we refuse to automate',
-      o.boundaryCount === 4, String(o.boundaryCount));
-    check('it promises the boundary is agreed in writing',
-      /in writing/i.test(o.boundaries), o.boundaries.slice(0, 200));
-    check('AI appears only as a limit, never as a boast',
-      /drafts and suggests/i.test(o.boundaries) && /approves anything that matters/i.test(o.boundaries),
-      o.boundaries.slice(-200));
-    /* ⚠️  "AI" WAS BANNED OUTRIGHT AND IS NOW ALLOWED IN EXACTLY ONE PLACE.
-       If the word appears anywhere else on the page it is being used as a
-       claim rather than a limit, which is the thing the ban was right about. */
-    const aiHits = (o.bodyText.match(/\bAI\b/g) || []).length;
-    const aiInBoundaries = (o.boundaries.match(/\bAI\b/g) || []).length;
-    check('AI is mentioned only inside the boundaries block',
-      aiHits > 0 && aiHits === aiInBoundaries,
-      'page ' + aiHits + ' | boundaries ' + aiInBoundaries);
+       A strong guarantee from a company nobody has heard of invites the
+       question of why it needs one, and administering refunds is overhead a
+       two person shop does not want. The credit against a build survives and
+       is the quieter, more credible risk reversal.
+
+       The boundaries panel was the only place this site named artificial
+       intelligence, and naming it at all was judged to cost more than it
+       bought. If it ever returns, it can return without that term: "anything
+       that commits money", "complaints", "decisions about a person" are about
+       automation in general and never needed it. */
+    check('no guarantee is published',
+      !/you pay nothing|hours a week of recoverable/i.test(o.cardText),
+      o.cardText.slice(0, 200));
+    check('the credit against a build is still the risk reversal',
+      /credited in full/i.test(o.terms), o.terms);
+    check('the boundaries panel is gone', !o.hasBoundaries);
+
+    /* ⚠️  THOSE TWO LETTERS APPEAR NOWHERE ON THIS SITE.
+       Not as a claim, not as a limit, not in a caveat. This was relaxed once
+       to allow a single qualified mention and has been tightened back. The
+       check is on the RENDERED text of the page, so a source comment cannot
+       trip it and cannot excuse it either. */
+    check('artificial intelligence is never named',
+      !/\bAI\b/.test(o.bodyText),
+      (o.bodyText.match(/.{40}\bAI\b.{40}/) || [''])[0]);
 
     /* Ten patterns, each of which is running in the system above. Nothing
        goes in this list that is not already built. */
