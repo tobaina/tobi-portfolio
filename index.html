@@ -66,7 +66,8 @@
       "@type": "Organization",
       "@id": "https://systems.getpolisha.com/#organization",
       "name": "Polisha Systems",
-      "url": "https://systems.getpolisha.com/"
+      "url": "https://systems.getpolisha.com/",
+      "sameAs": ["https://www.linkedin.com/company/polisha-systems/"]
     },
     {
       "@type": "ProfessionalService",
@@ -640,7 +641,14 @@
           <h2>One team accountable from problem to handover.</h2>
           <p>Process analysis and build are separate roles here. Someone maps how the work actually runs before anyone writes code, which is why a system we hand over matches the way your team already operates instead of the way software assumes it does.</p>
         </div>
-        <a class="button secondary" href="https://www.linkedin.com/in/tobaina/" target="_blank" rel="noopener" data-track="linkedin">Connect on LinkedIn</a>
+        <!-- ⚠️  THIS WAS A PERSONAL PROFILE UNTIL THE COMPANY PAGE EXISTED.
+             It was the last place on this site a visitor could reach a named
+             individual, which the rest of the copy is written to avoid. It
+             must stay pointed at /company/, never back at /in/, and there is
+             a test that fails if it moves. "Follow" rather than "Connect":
+             connecting is what you do with a person, and using the wrong verb
+             tells anyone who uses LinkedIn that this link was not checked. -->
+        <a class="button secondary" href="https://www.linkedin.com/company/polisha-systems/" target="_blank" rel="noopener" data-track="linkedin">Follow on LinkedIn</a>
       </div>
     </div>
   </section>
