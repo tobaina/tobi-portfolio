@@ -162,7 +162,21 @@ function serve() {
     const ids = ['tab-capacity', 'tab-approvals', 'tab-quality', 'tab-overview'];
     for (const id of ids) {
       await page.click('#' + id);
-      await page.waitForTimeout(250);
+      /* ⚠️  DO NOT PUT A FIXED SLEEP BACK HERE.
+         This was waitForTimeout(250), which is ample against the local static
+         server and not ample against a CDN on a cold cache. Two live runs
+         failed "image actually loaded" on different tabs each time while
+         every one of those files returned 200 to a direct request, which is
+         the signature of a timing bug in the test rather than a broken image.
+         A flaky assertion is worse than no assertion: it teaches you to ignore
+         a red run. Wait for the real condition, bounded, and let the check
+         below still fail on an image that genuinely never arrives. */
+      await page.waitForFunction(i => {
+        const t = document.getElementById(i);
+        const p = document.getElementById(t.getAttribute('aria-controls'));
+        const m = p.querySelector('img');
+        return !p.hidden && m.complete && m.naturalWidth > 0;
+      }, id, { timeout: 15000 }).catch(() => {});
       const st = await page.evaluate(i => {
         const tab = document.getElementById(i);
         const panel = document.getElementById(tab.getAttribute('aria-controls'));
@@ -880,13 +894,29 @@ function serve() {
        server does not read vercel.json, so this one is only meaningful
        against a deployment. */
     if (DEPLOYED) {
+      /* ⚠️  THE CARD MUST BE A REWRITE (200 AT "/"), NEVER A REDIRECT.
+         middleware.js used to answer crawlers with a 302 to /share.html, and
+         middleware runs BEFORE rewrites, so the correct rewrite sitting in
+         vercel.json never fired. A crawler that does not follow redirects got
+         the body "Redirecting..." and built no card at all. The middleware was
+         deleted rather than repaired: vercel.json already expresses the same
+         rule as a rewrite, and if that rule ever stops matching, the fallback
+         is index.html, whose own tags are correct.
+         maxRedirects: 0 is the whole point of this assertion. Removing it
+         makes the test pass against the broken behaviour. */
       const asCrawler = await ctx.request.get(BASE, {
         headers: { 'user-agent': 'LinkedInBot/1.0 (compatible; Mozilla/5.0)' },
+        maxRedirects: 0,
       });
+      check('the crawler is answered directly, not redirected',
+        asCrawler.status() === 200, String(asCrawler.status()));
+
       const crawled = await asCrawler.text();
       check('a social crawler is served the card',
         /Polisha Systems/.test(crawled) && !/Tomi|Tobi Aina/i.test(crawled),
         crawled.slice(0, 200));
+      check('the crawler response carries an og:title',
+        /og:title/.test(crawled));
     }
 
     await ctx.close();
