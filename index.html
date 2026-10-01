@@ -9,11 +9,25 @@
 <meta name="theme-color" content="#ffffff">
 <link rel="canonical" href="https://systems.getpolisha.com/">
 
-<!-- Social preview.
-     These tags are the direct half of the preview system. The other half is
-     share.html + middleware.js + vercel.json, which serve share.html to
-     crawlers that ignore client redirects. Both halves point at the same
-     /og-image-2.jpg rewrite. Do not remove one without retesting the other. -->
+<!-- Social preview. THESE TAGS ARE THE PREVIEW SYSTEM. There is no other half.
+
+     An earlier version of this comment said share.html + middleware.js +
+     vercel.json served the card to crawlers. That was true and it was the bug:
+     middleware.js answered crawlers with a 302 and, running before rewrites,
+     shadowed the vercel.json rule entirely, so anything that did not follow
+     redirects got the body "Redirecting..." and built no card. The middleware
+     was deleted.
+
+     MEASURED AFTERWARDS, NOT ASSUMED: with the middleware gone, a request to
+     "/" carrying a crawler user agent returns 200 and receives THIS file, not
+     share.html. The vercel.json rewrite still does not fire. Vercel's docs do
+     not state the filesystem-versus-rewrite ordering, so the reason is not
+     recorded here as fact; the observed behaviour is. share.html is therefore
+     a spare, reachable only at its own URL, and nothing depends on it.
+
+     WHAT ACTUALLY MATTERS NOW: every tag below sits inside the first 1.8 KB of
+     a 45 KB document, well inside any crawler's truncation window. A test
+     asserts that. If you add anything above this block, keep it small. -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://systems.getpolisha.com/">
 <meta property="og:title" content="Polisha Systems | Websites, CRMs and business systems">

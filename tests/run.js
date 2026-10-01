@@ -899,9 +899,10 @@ function serve() {
          middleware runs BEFORE rewrites, so the correct rewrite sitting in
          vercel.json never fired. A crawler that does not follow redirects got
          the body "Redirecting..." and built no card at all. The middleware was
-         deleted rather than repaired: vercel.json already expresses the same
-         rule as a rewrite, and if that rule ever stops matching, the fallback
-         is index.html, whose own tags are correct.
+         deleted. MEASURED AFTERWARDS: the vercel.json rewrite still does not
+         fire, and a crawler now receives index.html at 200. That is fine,
+         because index.html's own tags are correct and sit in its first 1.8 KB,
+         but it means share.html is a spare that nothing reaches.
          maxRedirects: 0 is the whole point of this assertion. Removing it
          makes the test pass against the broken behaviour. */
       const asCrawler = await ctx.request.get(BASE, {
@@ -917,6 +918,16 @@ function serve() {
         crawled.slice(0, 200));
       check('the crawler response carries an og:title',
         /og:title/.test(crawled));
+
+      /* ⚠️  CRAWLERS TRUNCATE. The card is only as good as the bytes that
+         arrive before a scraper stops reading, and several stop well short of
+         a whole document. index.html is ~45 KB and the tags live near the top
+         purely because nothing has been inserted above them yet. This pins
+         that: put a large inline style, script or banner above the og block
+         and this fails before a stranger sees a blank card on LinkedIn. */
+      const ogAt = crawled.indexOf('og:title');
+      check('the og tags arrive inside the first 4 KB',
+        ogAt > -1 && ogAt < 4096, 'og:title at byte ' + ogAt);
     }
 
     await ctx.close();
