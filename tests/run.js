@@ -145,13 +145,11 @@ function serve() {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
     const page = await ctx.newPage();
     await page.goto(BASE, { waitUntil: 'networkidle' });
-    /* The two products used to have a section of their own. It went, because
-       both are career products and the buyer here came for an operations
-       system. The LINKS did not go: they moved into one sentence in the team
-       block, and they are the only thing on the page that lets a visitor
-       check that we ship anything besides client work. Assert them where
-       they now live, and assert the section stays gone. */
-    const links = await page.evaluate(() => [...document.querySelectorAll('.founder-products a')].map(a => ({
+    /* These two links are the only claim on this page a stranger can go and
+       check: everything else, Direct Apply included, is a screen they cannot
+       log into. They are therefore load bearing for cold traffic, and the
+       assertions follow them wherever in the page they live. */
+    const links = await page.evaluate(() => [...document.querySelectorAll('#products .pstrip-links a')].map(a => ({
       href: a.href, target: a.target, rel: a.rel, text: a.textContent.trim() })));
     check('two product links present', links.length === 2, 'found ' + links.length);
     check('Verdict link points at the live product', links.some(l => l.href === 'https://verdict.getpolisha.com/'), JSON.stringify(links.map(l => l.href)));
@@ -159,13 +157,38 @@ function serve() {
     check('product links open in a new tab safely', links.every(l => l.target === '_blank' && /noopener/.test(l.rel)));
     check('each product link is named, not a bare "here"',
       links.every(l => /Verdict|GetPolisha/i.test(l.text)), JSON.stringify(links.map(l => l.text)));
-    const gone = await page.evaluate(() => ({
-      section: !!document.getElementById('products'),
-      cards: document.querySelectorAll('.pcard').length,
-      navLink: !!document.querySelector('a[href="#products"]'),
-    }));
-    check('the products section has not grown back', !gone.section && gone.cards === 0, JSON.stringify(gone));
-    check('nothing still links to the removed section', !gone.navLink, JSON.stringify(gone));
+    /* ⚠️  THE SIZE CHECK IS THE POINT OF THIS BLOCK, NOT A NICETY.
+       What stood here was two cards with screenshots and feature lists, about
+       1,100px and a quarter of the scroll. It was cut to a strip on purpose
+       and the obvious way for it to come back is one screenshot at a time, so
+       the height and the image count are both pinned. If this fails because
+       the strip legitimately needs more room, raise the number deliberately
+       and say why. Do not delete the check. */
+    const strip = await page.evaluate(() => {
+      const el = document.getElementById('products');
+      return {
+        present: !!el,
+        height: el ? Math.round(el.getBoundingClientRect().height) : 0,
+        images: el ? el.querySelectorAll('img, picture, svg').length : -1,
+        lists: el ? el.querySelectorAll('.pcard, .product-grid').length : -1,
+        navLink: !!document.querySelector('a[href="#products"]'),
+      };
+    });
+    check('the proof strip is present', strip.present, JSON.stringify(strip));
+    check('the strip has not grown back into a card section',
+      strip.height > 0 && strip.height <= 320, JSON.stringify(strip));
+    check('the strip carries no screenshots', strip.images === 0, JSON.stringify(strip));
+    check('the old product cards have not returned', strip.lists === 0, JSON.stringify(strip));
+    check('the strip is reachable from the footer', strip.navLink, JSON.stringify(strip));
+
+    /* Every in-page anchor must land on something. The footer carried a
+       "Services" link to #services for weeks and there has never been a
+       section with that id: it did nothing when clicked. */
+    const deadAnchors = await page.evaluate(() => [...document.querySelectorAll('a[href^="#"]')]
+      .map(a => a.getAttribute('href'))
+      .filter(h => h && h !== '#' && !document.querySelector(h)));
+    check('every in-page link lands on a real section',
+      deadAnchors.length === 0, JSON.stringify(deadAnchors));
     await ctx.close();
   }
 
@@ -511,7 +534,7 @@ function serve() {
         actions: [...document.querySelectorAll('.actions .button')]
           .map(a => ({ label: text(a), href: a.getAttribute('href') })),
         caseDepthLabel: text(document.querySelector('.case-depth span')),
-        productsLine: text(document.querySelector('.founder-products')),
+        productsLine: text(document.querySelector('.pstrip-copy')),
         notice: text(document.querySelector('.notice')),
         noticeLinksToContact: !!document.querySelector('.notice a[href="#contact"]'),
         hasPricing: !!document.getElementById('pricing'),
@@ -641,6 +664,10 @@ function serve() {
       /products of our own/i.test(r.productsLine), r.productsLine);
     check('the products line says we run them, not only that we built them',
       /\brun\b/i.test(r.productsLine), r.productsLine);
+    check('the products are still declared as ours and not as client work',
+      /not client work/i.test(r.productsLine), r.productsLine);
+    check('the strip still invites the visitor to open one',
+      /open either one/i.test(r.productsLine), r.productsLine);
 
     // ---- the announcement
     check('announcement invites a project', /taking on new projects/i.test(r.notice), r.notice);
