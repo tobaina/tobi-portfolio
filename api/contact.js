@@ -55,136 +55,11 @@ const TO = "tobaina@gmail.com";
    failure here is logged and swallowed.
    -------------------------------------------------------------------------- */
 
-/* ⚠️  DO NOT "TIDY" THIS NAME. It is matched literally against what already
-   exists in Resend and must stay byte-identical in all four places that know
-   it: this file, polisha's src/lib/email.ts and scripts/resend-setup.mts, and
-   cv-verdict-ai's src/lib/marketing/marketingList.server.ts. Renaming it
-   would not rename the segment; it would create a second, empty one and split
-   the list. */
-const SEGMENT_NAME = "Free check opt-ins";
-
-// Resolved once per instance. A success is cached; a failure is NOT, so a
-// momentary Resend outage does not disable the list for the instance's life.
-let cachedSegmentId = null;
-let inFlightSegment = null;
-
-function __resetSegmentCacheForTests() {
-  cachedSegmentId = null;
-  inFlightSegment = null;
-}
-
-async function resendJson(key, method, path, body) {
-  const res = await fetch("https://api.resend.com" + path, {
-    method: method,
-    headers: {
-      Authorization: "Bearer " + key,
-      "Content-Type": "application/json",
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  // The status only. Never the key, the headers, or the body -- which on this
-  // endpoint lists every segment name on the account.
-  if (!res.ok) throw new Error(method + " " + path + " -> " + res.status);
-  return res.json();
-}
-
-/* ⚠️  PAGINATES. `GET /segments` returns 20 per page by default, so an
-   unpaginated call silently stops finding the list the day the account's 21st
-   segment appears -- and the symptom is a duplicate segment being created and
-   the list splitting, long after anyone remembers touching this. */
-async function listSegments(key) {
-  const all = [];
-  let after;
-  // Bounded rather than `while (true)`: a provider that always says has_more
-  // must not spin forever on a request path.
-  for (let page = 0; page < 20; page++) {
-    const query = after
-      ? "?limit=100&after=" + encodeURIComponent(after)
-      : "?limit=100";
-    const payload = await resendJson(key, "GET", "/segments" + query);
-    const batch = (payload && payload.data) || [];
-    all.push.apply(all, batch);
-    if (!payload || !payload.has_more || batch.length === 0) break;
-    after = batch[batch.length - 1] && batch[batch.length - 1].id;
-    if (!after) break;
-  }
-  return all;
-}
-
-/* ⚠️  "OLDEST" IS THE RACE FIX, NOT A PREFERENCE. Two instances taking a
-   first opt-in at the same moment can both find nothing and both create a
-   segment. Everyone picking the oldest means they converge on the same one
-   from the next request on, instead of each keeping whichever it created and
-   the list splitting in two permanently. */
-function oldestNamed(segments) {
-  const matches = segments.filter(function (segment) {
-    return segment && segment.name === SEGMENT_NAME;
-  });
-  if (matches.length === 0) return null;
-  matches.sort(function (a, b) {
-    return String(a.created_at || "").localeCompare(String(b.created_at || ""));
-  });
-  return (matches[0] && matches[0].id) || null;
-}
-
-async function resolveSegmentId(key) {
-  const configured = process.env.RESEND_SEGMENT_ID;
-  if (configured) return configured;
-  if (cachedSegmentId) return cachedSegmentId;
-  if (inFlightSegment) return inFlightSegment;
-
-  inFlightSegment = (async function () {
-    const existing = oldestNamed(await listSegments(key));
-    if (existing) return existing;
-    await resendJson(key, "POST", "/segments", { name: SEGMENT_NAME });
-    // Re-list rather than trusting the id just created, so two instances that
-    // raced both settle on the same (oldest) segment. One extra request, once,
-    // on the first opt-in ever.
-    return oldestNamed(await listSegments(key));
-  })()
-    .then(function (id) {
-      if (id) cachedSegmentId = id;
-      return id;
-    })
-    .catch(function (error) {
-      console.error(
-        "[contact] Could not resolve the shared segment:",
-        error && error.message,
-      );
-      return null;
-    })
-    .finally(function () {
-      inFlightSegment = null;
-    });
-
-  return inFlightSegment;
-}
-
-async function addToMarketingList(email, key) {
-  const segmentId = await resolveSegmentId(key);
-  if (!segmentId) {
-    console.info('[contact] No segment named "' + SEGMENT_NAME + '"; opted-in address not stored.');
-    return "no_segment";
-  }
-  try {
-    const res = await fetch("https://api.resend.com/contacts", {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + key,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email: email, unsubscribed: false, segments: [segmentId] }),
-    });
-    if (!res.ok) {
-      console.error("[contact] Resend rejected contact:", res.status);
-      return "http_" + res.status;
-    }
-    return "added";
-  } catch (error) {
-    console.error("[contact] Could not reach Resend for the list:", error && error.message);
-    return "fetch_threw";
-  }
-}
+/* The segment lookup and the opt-in write live in api/_marketing.js, because
+   the Workflow Audit is a second endpoint somebody can consent from and two
+   copies of that logic would quietly create two segments with the same name.
+   Underscore-prefixed so Vercel bundles it without routing to it. */
+const { addToMarketingList, __resetSegmentCacheForTests } = require("./_marketing.js");
 
 const LIMITS = { name: 100, email: 254, message: 5000, phone: 40, company: 200 };
 
@@ -198,6 +73,7 @@ const LIMITS = { name: 100, email: 254, message: 5000, phone: 40, company: 200 }
    An unknown value is treated exactly like an untouched dropdown. */
 const NEEDS = {
   check: "Free process check",
+  diagnostic: "Operations Diagnostic",
   website: "Website or landing page",
   redesign: "Existing website redesign",
   system: "Business system or portal",
@@ -205,6 +81,22 @@ const NEEDS = {
   unsure: "Not sure yet",
 };
 const NEED_UNSTATED = "Not stated";
+
+/* ⚠️  READ FROM AN ALLOWLIST, EXACTLY LIKE `need`, NEVER AS FREE TEXT.
+   A budget arrives from a dropdown, so the only values that may reach our
+   inbox are the ones we put in that dropdown. Accepting the string as typed
+   would let anything at all appear in a notification under a label that says
+   it came from a menu, which is how a field like this becomes a way to write
+   arbitrary text into somebody's mailbox. An unknown value is treated exactly
+   like an untouched dropdown. */
+const BUDGETS = {
+  unsure: "Not sure yet",
+  under1500: "Under CA$1,500",
+  "1500to5000": "CA$1,500 to CA$5,000",
+  "5000to15000": "CA$5,000 to CA$15,000",
+  over15000: "Over CA$15,000",
+};
+const BUDGET_UNSTATED = "Not stated";
 const MIN_MESSAGE = 10;
 
 // Best-effort throttle. Serverless instances are recycled, so this is a
@@ -279,6 +171,12 @@ module.exports = async function handler(req, res) {
   // thing, and none of them may stop a message arriving.
   const need =
     Object.prototype.hasOwnProperty.call(NEEDS, body.need) ? NEEDS[body.need] : NEED_UNSTATED;
+  // Same rules as `need`: optional, allowlisted, and never able to block a
+  // message. Somebody who will not name a budget must still be able to write.
+  const budget =
+    Object.prototype.hasOwnProperty.call(BUDGETS, body.budget)
+      ? BUDGETS[body.budget]
+      : BUDGET_UNSTATED;
 
   const errors = {};
   if (!name) errors.name = "Please tell us your name.";
@@ -332,6 +230,7 @@ module.exports = async function handler(req, res) {
     "Phone: " + (phone || "Not given") + "\n" +
     "Firm:  " + (company || "Not given") + "\n" +
     "Needs: " + need + "\n" +
+    "Budget: " + budget + "\n" +
     "List:  " + listOutcome + "\n\n" +
     message + "\n";
 
