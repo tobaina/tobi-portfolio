@@ -110,7 +110,6 @@ function plainResult(result, answers) {
     lines.push("");
     lines.push("WHAT SHOULD STAY HUMAN");
     result.human.forEach((h) => lines.push("  - " + h));
-    lines.push("  Where an AI assistant helps, it drafts and suggests. A person approves anything that matters.");
   }
   lines.push("");
   lines.push(result.verdict.headline.toUpperCase());
