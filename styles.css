@@ -642,9 +642,7 @@ section { padding: 88px 0; }
 
 /* -------------------------------- The offer ----------------------------
    Every colour below was measured against the surface it actually sits on,
-   not against white: the guarantee is --green on a mint tint (6.09:1), the
-   boundaries panel is on --navy, the pattern chips are on --blue-soft.
-   Lowest pair in this block is 4.63:1. ----------------------------------- */
+   not against white. Lowest pair in this block is 4.63:1. ---------------- */
 .offer-section { background: var(--ice); }
 .offer-grid { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
 .offer-card {
@@ -678,23 +676,6 @@ section { padding: 88px 0; }
 .offer-alt { margin: 13px 0 0; color: var(--muted); font-size: 13px; }
 .offer-alt a { color: var(--blue); font-weight: 600; }
 
-.boundaries {
-  padding: 30px 28px;
-  border-radius: var(--radius-l);
-  background: var(--navy);
-  color: var(--on-navy);
-}
-.boundaries h3 { margin: 0 0 9px; color: #fff; font-size: 20px; letter-spacing: -.025em; }
-.boundaries > p { margin: 0 0 16px; color: var(--on-navy-soft); font-size: 14px; }
-.boundary-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.boundary-list li {
-  padding: 11px 13px;
-  border: 1px solid var(--navy-line);
-  border-radius: var(--radius-m);
-  background: rgba(255, 255, 255, .05);
-  font-size: 13.5px;
-  line-height: 1.45;
-}
 
 /* ------------------------------ Ten patterns --------------------------- */
 .patterns { margin-top: 44px; padding-top: 30px; border-top: 1px solid var(--navy-line); }
@@ -1188,7 +1169,7 @@ footer {
   .audit-table th, .audit-table td { padding: 9px 6px; font-size: 13px; }
   .audit-nav { flex-direction: column-reverse; }
   .audit-nav .button { width: 100%; }
-  .offer-card, .boundaries, .price-col { padding: 24px 20px; }
+  .offer-card, .price-col { padding: 24px 20px; }
   .offer-list { grid-template-columns: 1fr; }
   .offer-head { flex-direction: column; gap: 4px; }
   .price-line { grid-template-columns: 1fr; gap: 4px; }

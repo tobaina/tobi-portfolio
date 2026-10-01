@@ -160,18 +160,21 @@
       ],
     },
     {
-      id: "human",
-      section: "Boundaries",
-      text: "Which of these should always have a person involved?",
-      hint: "Choose every one that applies. We design around these rather than over them.",
-      multi: true,
+      /* ⚠️  THIS QUESTION REPLACED ONE ASKING WHAT SHOULD "STAY HUMAN".
+         That framing only makes sense if something non-human is otherwise
+         doing the work, which is a claim this business has decided not to
+         make anywhere. The slot was kept rather than dropped, because twelve
+         questions is what the page promises, and this one earns its place:
+         head count is the single biggest driver of what a build costs, and
+         knowing it before the first call saves a round trip. */
+      id: "team",
+      section: "Your team",
+      text: "How many people would use it day to day?",
       options: [
-        { value: "quoting", label: "Quoting and pricing" },
-        { value: "complaints", label: "Complaints and anything going wrong" },
-        { value: "approving", label: "Approving work before it goes out" },
-        { value: "talking", label: "Talking to clients" },
-        { value: "hiring", label: "Decisions about people" },
-        { value: "none", label: "None of these", exclusive: true },
+        { value: "t1", label: "Just me", n: 0 },
+        { value: "t5", label: "2 to 5", n: 0 },
+        { value: "t20", label: "6 to 20", n: 0 },
+        { value: "t21", label: "More than 20", n: 0 },
       ],
     },
     {
@@ -206,8 +209,7 @@
 
   /* "None of these" is an answer, not a thing chosen. Counting it would
      charge somebody half an hour a week for the reminders they told us they
-     do not send, and would list "None of these" among the things that must
-     stay human. */
+     do not send. */
   function real(list) {
     return list.filter(function (v) { return v !== "none"; });
   }
@@ -306,7 +308,6 @@
         ", which usually means the process depends on somebody remembering.");
     }
 
-    var human = real(chosen(answers, "human")).map(function (v) { return labelFor("human", v); });
 
     /* ⚠️  "NOT YET" IS A REAL ANSWER AND MUST SURVIVE.
        Under three hours a week, a build cannot pay for itself at our prices,
@@ -347,7 +348,7 @@
       parts: parts.map(function (p) { return { key: p.key, label: p.label, hours: round(p.hours), working: p.working, fix: p.fix }; }),
       opportunities: opportunities.map(function (p) { return { key: p.key, fix: p.fix, hours: round(p.hours), because: p.label.toLowerCase() }; }),
       stalls: stalls,
-      human: human,
+      team: labelFor("team", answers.team),
       priority: labelFor("priority", answers.priority),
       verdict: verdict,
       answered: QUESTIONS.filter(function (q) {

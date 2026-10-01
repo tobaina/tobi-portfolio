@@ -163,9 +163,6 @@
     });
     el("audit-opps-col").hidden = r.opportunities.length === 0;
 
-    fill("audit-human", r.human, "li");
-    el("audit-human-block").hidden = r.human.length === 0;
-
     el("audit-verdict-head").textContent = r.verdict.headline;
     el("audit-verdict-body").textContent = r.verdict.body;
     var acts = el("audit-verdict-actions");
