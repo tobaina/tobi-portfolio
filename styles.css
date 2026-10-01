@@ -1045,19 +1045,25 @@ footer {
 }
 /* The two routes, named directly under the buttons. Mono and wide-tracked so
    it reads as a label rather than a fourth sentence of body copy. */
-/* ⚠️  SEPARATED BY SPACE, NOT BY PUNCTUATION, AND THAT IS THE FIX.
-   This line wraps at most widths. Dots between the labels wrapped badly at
-   every one of them: as their own elements a dot could open the second line
+/* ⚠️  EVERY ITEM CARRIES ITS OWN MARK. THAT IS WHAT MAKES THE WRAP SAFE.
+   This line wraps at most widths, and separators placed BETWEEN the labels
+   cannot survive it: as their own elements a dot could open the second line
    ("· PORTALS · AUTOMATION", which reads as a mistake), and generated after a
-   label it could only trail the first. Neither is tidy, and no CSS can tell a
-   separator that it has landed at the end of a line. A flex row with a gap
-   removes the question entirely. Do not put the dots back. */
+   label it could only trail the first. No CSS can tell a separator that it has
+   landed at the end of a line.
+   A leading mark on every item has no such case. The first item, the last, and
+   the first on any wrapped row all look identical, at every width.
+   Gaps alone were tried and rejected: visually the labels ran together, and
+   the flex container collapsed the whitespace between them so the text content
+   itself read as one word. */
 .hero-services {
   display: flex;
   flex-wrap: wrap;
-  column-gap: 20px;
-  row-gap: 6px;
+  column-gap: 22px;
+  row-gap: 9px;
   margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
   color: var(--muted);
   font-family: var(--mono);
   font-size: 11px;
@@ -1065,7 +1071,20 @@ footer {
   letter-spacing: .13em;
   text-transform: uppercase;
 }
-.hero-services span { white-space: nowrap; }
+.hero-services li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+}
+.hero-services li::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  background: var(--blue);
+  transform: rotate(45deg);
+}
 
 .hero-price b { color: var(--ink); }
 .hero-price a { color: var(--blue); font-weight: 600; }
