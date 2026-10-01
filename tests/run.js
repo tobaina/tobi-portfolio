@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Test suite for tobi.getpolisha.com
+   Test suite for Polisha Systems (systems.getpolisha.com)
 
    Runs the real built site from a local static server, in a real browser, at
    every width the design claims to support. No mocks except the contact
@@ -47,6 +47,8 @@ function serve() {
   const server = process.env.SITE ? null : await serve();
   const BASE = process.env.SITE || `http://127.0.0.1:${server.address().port}/`;
   console.log('testing ' + BASE + '\n');
+  const url = p => BASE.replace(/\/$/, '') + p;   // BASE ends in "/"
+  const DEPLOYED = Boolean(process.env.SITE);      // local server has no vercel.json rewrites
 
   const browser = await chromium.launch();
   const mockContact = async page => {
@@ -575,7 +577,12 @@ function serve() {
       r.priceGroups.join(' | '));
     check('a website group exists', r.priceGroups.some(g => /website/i.test(g)),
       r.priceGroups.join(' | '));
-    check('an operations group exists', r.priceGroups.some(g => /operations/i.test(g)),
+    /* ⚠️  THE GROUP HEADING MUST MATCH THE ROWS UNDER IT AND THE HERO.
+           This group was headed "Operations systems" while the row inside it
+           and the hero sentence both said "Business systems", so a reader
+           comparing the hero price to the table was matching two different
+           words for one thing. The heading follows the rows now. */
+    check('a business systems group exists', r.priceGroups.some(g => /business systems/i.test(g)),
       r.priceGroups.join(' | '));
     check('an after-launch group exists', r.priceGroups.some(g => /after launch/i.test(g)),
       r.priceGroups.join(' | '));
@@ -823,10 +830,104 @@ function serve() {
       twitterCard: (document.querySelector('meta[name="twitter:card"]') || {}).content,
       title: document.title,
     }));
-    check('canonical preserved', meta.canonical === 'https://tobi.getpolisha.com/');
+    /* ⚠️  ONE CANONICAL HOME, ASSERTED FROM BOTH DOMAINS.
+           This suite is run against tobi.getpolisha.com AND
+           systems.getpolisha.com, which serve byte-identical HTML. Two live
+           addresses with no canonical between them is duplicate content, and
+           search engines pick the winner rather than the business doing it.
+           systems.getpolisha.com is the company address, so the canonical is
+           that one from BOTH hosts. Do not make this relative to BASE, which
+           would let each host declare itself canonical and defeat the point. */
+    check('canonical names the company address from either host',
+      meta.canonical === 'https://systems.getpolisha.com/', meta.canonical);
     check('og image preserved', /og-image-2\.jpg$/.test(meta.ogImage || ''));
     check('twitter card preserved', meta.twitterCard === 'summary_large_image');
     check('title carries the company name', /Polisha Systems/.test(meta.title), meta.title);
+    await ctx.close();
+  }
+
+  /* ============================================ the social card =========
+     ⚠️  share.html IS A SECOND COPY OF THIS SITE'S IDENTITY, AND IT IS THE
+     ONE STRANGERS SEE FIRST. vercel.json rewrites "/" to /share.html for
+     LinkedIn, Facebook, Twitter, Slack, WhatsApp, Telegram, Discord and
+     Reddit crawlers, so the preview card on every shared link is built from
+     that file and NOT from index.html.
+
+     This block exists because share.html was missed during the repositioning
+     and spent weeks telling every social crawler "Tobi Aina" and "I build the
+     systems", while index.html said Polisha Systems and "we". Nobody sees that
+     by loading the site in a browser. Update one file, update both.
+     ====================================================================== */
+  {
+    const ctx = await browser.newContext();
+
+    const direct = await ctx.request.get(url('/share.html'));
+    check('share.html is served', direct.status() === 200, String(direct.status()));
+    const shareHtml = await direct.text();
+
+    check('the card names the company', /Polisha Systems/.test(shareHtml));
+    check('the card names no person',
+      !/Tobi|Tomi|Aina/i.test(shareHtml), (shareHtml.match(/Tobi|Tomi|Aina/i) || [''])[0]);
+    check('the card speaks as a company',
+      !/\bI\b|\bmy\b/.test(shareHtml), (shareHtml.match(/\bI\b|\bmy\b/) || [''])[0]);
+    check('the card points at the company address',
+      /og:url content=https:\/\/systems\.getpolisha\.com\//.test(shareHtml));
+    check('the card carries an image', /og:image content=\S*og-image-2\.jpg/.test(shareHtml));
+    check('the card sends humans on to the site', /location\.replace\('\/'\)/.test(shareHtml));
+
+    /* The rewrite itself, not just the file: a correct share.html behind a
+       broken user-agent rule is still a wrong preview card. The local static
+       server does not read vercel.json, so this one is only meaningful
+       against a deployment. */
+    if (DEPLOYED) {
+      const asCrawler = await ctx.request.get(BASE, {
+        headers: { 'user-agent': 'LinkedInBot/1.0 (compatible; Mozilla/5.0)' },
+      });
+      const crawled = await asCrawler.text();
+      check('a social crawler is served the card',
+        /Polisha Systems/.test(crawled) && !/Tomi|Tobi Aina/i.test(crawled),
+        crawled.slice(0, 200));
+    }
+
+    await ctx.close();
+  }
+
+  /* ========================================== one team, no one face =====
+     The team section used to carry a single portrait under the heading "Your
+     team". One face under that heading does not read as a small team, it
+     reads as one person with a plural pronoun, which is the exact impression
+     the repositioning exists to correct. The portrait and both its asset
+     files were removed rather than joined by invented colleagues.
+     ====================================================================== */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const team = await page.evaluate(() => {
+      const el = document.querySelector('.founder');
+      if (!el) return null;
+      return {
+        images: el.querySelectorAll('img, picture').length,
+        text: el.innerText.replace(/\s+/g, ' '),
+        button: (el.querySelector('.button') || {}).innerText || '',
+      };
+    });
+    check('the team section exists', team !== null);
+    check('the team section shows no single portrait', team.images === 0, String(team.images));
+    check('the team section still claims accountability',
+      /accountable/i.test(team.text));
+    check('more than one role is described',
+      /separate roles|two roles/i.test(team.text), team.text.slice(0, 160));
+    check('the social button promises no company page it does not have',
+      !/follow us/i.test(team.button), team.button);
+
+    const portraits = await Promise.all(
+      ['/assets/tobi-portrait.jpg', '/assets/tobi-portrait.webp'].map(
+        (u) => page.request.get(url(u)).then((r) => u + ':' + r.status())));
+    check('the portrait files are gone',
+      portraits.every((r) => /:40[34]$/.test(r)), portraits.join(' '));
+
     await ctx.close();
   }
 
