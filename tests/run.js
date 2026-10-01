@@ -1293,6 +1293,146 @@ function serve() {
     await ctx.close();
   }
 
+  /* =====================================================================
+     THE DEVICE SWEEP
+     ⚠️  THESE ARE NOT STYLE CHECKS. Every one of them is here because the
+     page failed it on a real device size, measured rather than assumed:
+     8px label text, 18px footer links, a phone with no navigation at all,
+     and twice now a flex container eating the space between two words.
+     They run at every width the design claims to support, plus 320px,
+     which is the narrowest screen still in use.
+     ===================================================================== */
+  {
+    const SWEEP = [320, 360, 390, 414, 430, 600, 700, 760, 768, 820, 900, 1024, 1280, 1440, 1512];
+    for (const page_url of ['/', '/audit.html']) {
+      const label = page_url === '/' ? 'the landing page' : 'the audit page';
+      for (const w of SWEEP) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: 860 } });
+        const page = await ctx.newPage();
+        await page.goto(BASE + page_url.replace(/^\//, ''), { waitUntil: 'networkidle' });
+        const r = await page.evaluate(() => {
+          const vw = document.documentElement.clientWidth;
+          const out = [];
+          for (const el of document.querySelectorAll('body *')) {
+            const b = el.getBoundingClientRect();
+            if (!b.width && !b.height) continue;
+            const cs = getComputedStyle(el);
+            if (cs.position === 'fixed' || cs.display === 'none') continue;
+            const left = b.left + scrollX, right = b.right + scrollX;
+            /* Skip-links and honeypots are parked thousands of pixels off
+               screen on purpose. Anything merely a little too wide is not. */
+            if (left < -1000) continue;
+            if (right > vw + 1 || left < -1) {
+              out.push(el.tagName.toLowerCase() + '.' + (typeof el.className === 'string' ? el.className.trim().split(/\s+/)[0] : ''));
+            }
+          }
+          const small = [];
+          for (const el of document.querySelectorAll('a[href], button, input, select, textarea, summary, [role="tab"]')) {
+            const b = el.getBoundingClientRect();
+            if (!b.width && !b.height) continue;
+            if (getComputedStyle(el).display === 'none') continue;
+            if (el.type === 'hidden') continue;
+            /* A link inside a sentence is exempt from the target size rule,
+               and padding one out would break the line it belongs to. */
+            const p = el.parentElement;
+            const inline = el.tagName === 'A' && p && /^(P|LI|SPAN|TD|LABEL|H1|H2|H3|B|STRONG)$/.test(p.tagName)
+              && p.textContent.trim().length > el.textContent.trim().length + 12;
+            if (inline) continue;
+            if (b.height < 24 || b.width < 24) {
+              small.push(el.tagName.toLowerCase() + ' "' + (el.textContent || '').trim().slice(0, 18) + '" ' + Math.round(b.width) + 'x' + Math.round(b.height));
+            }
+          }
+          const tiny = new Set();
+          for (const el of document.querySelectorAll('p,li,span,a,td,th,div,label,small,summary,b')) {
+            if (!el.firstChild || el.firstChild.nodeType !== 3) continue;
+            if (el.textContent.trim().length < 8) continue;
+            if (parseFloat(getComputedStyle(el).fontSize) < 10) {
+              tiny.add(el.tagName.toLowerCase() + '.' + (typeof el.className === 'string' ? el.className.trim().split(/\s+/)[0] : ''));
+            }
+          }
+          /* A flex or grid container collapses the whitespace between its
+             children, so a label and its arrow run together in the text
+             even though they look separated on screen. */
+          const glued = [...document.querySelectorAll('a,li,p,span,b')]
+            .map(e => e.textContent.replace(/\s+/g, ' ').trim())
+            .filter(t => t.length < 80 && /[a-z](↗|→|✓)/i.test(t));
+          return { vw, scrollW: document.documentElement.scrollWidth,
+                   out: [...new Set(out)], small, tiny: [...tiny], glued: [...new Set(glued)] };
+        });
+        check('no sideways scrolling on ' + label + ' at ' + w + 'px',
+          r.scrollW <= r.vw + 1, r.scrollW + ' > ' + r.vw);
+        check('nothing hangs off the edge of ' + label + ' at ' + w + 'px',
+          r.out.length === 0, r.out.join(', '));
+        check('every standalone control is at least 24px on ' + label + ' at ' + w + 'px',
+          r.small.length === 0, r.small.join(' | '));
+        check('no text below 10px on ' + label + ' at ' + w + 'px',
+          r.tiny.length === 0, r.tiny.join(', '));
+        check('no label runs into its arrow on ' + label + ' at ' + w + 'px',
+          r.glued.length === 0, r.glued.join(' | '));
+        await ctx.close();
+      }
+    }
+  }
+
+  /* --------------------------------------------------------------- The menu
+     A phone had no navigation at all: below 700px every link was hidden and
+     only the button survived, on a page eleven screens tall. These assert
+     that the menu exists where it is needed, is absent where it is not, and
+     that using it actually arrives somewhere a visitor can read. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 760 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const shown = await page.evaluate(() => ({
+      menu: getComputedStyle(document.querySelector('details.menu')).display !== 'none',
+      links: getComputedStyle(document.querySelector('.nav-links')).display !== 'none',
+      items: [...document.querySelectorAll('.menu-panel a')].map(a => a.getAttribute('href')),
+      open: document.querySelector('details.menu').open,
+    }));
+    check('a phone has a menu', shown.menu, JSON.stringify(shown));
+    check('the inline links are not also shown on a phone', !shown.links, JSON.stringify(shown));
+    check('the menu starts closed', !shown.open, JSON.stringify(shown));
+    check('the menu reaches every section of the page',
+      shown.items.length >= 5 && shown.items.every(h => h && h.startsWith('#')), JSON.stringify(shown.items));
+    check('every menu item lands on a real section', await page.evaluate(
+      () => [...document.querySelectorAll('.menu-panel a')].every(a => document.querySelector(a.getAttribute('href')))));
+
+    await page.click('details.menu > summary');
+    await page.waitForTimeout(200);
+    check('the menu opens', await page.evaluate(() => document.querySelector('details.menu').open));
+
+    await page.click('.menu-panel a[href="#pricing"]');
+    await page.waitForTimeout(1200);
+    const landed = await page.evaluate(() => {
+      const h = document.querySelector('header.shell').getBoundingClientRect();
+      const t = document.getElementById('pricing').getBoundingClientRect();
+      return { headerBottom: Math.round(h.bottom), targetTop: Math.round(t.top),
+               stillOpen: document.querySelector('details.menu').open };
+    });
+    check('the menu closes once a link is used', !landed.stillOpen, JSON.stringify(landed));
+    /* ⚠️  A STICKY HEADER WITHOUT scroll-margin HIDES EVERY HEADING IT JUMPS
+       TO. The section must arrive BELOW the header, not behind it. */
+    check('a menu jump lands clear of the sticky header',
+      landed.targetTop >= landed.headerBottom, JSON.stringify(landed));
+    await ctx.close();
+  }
+
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+    const desk = await page.evaluate(() => ({
+      menu: getComputedStyle(document.querySelector('details.menu')).display !== 'none',
+      links: getComputedStyle(document.querySelector('.nav-links')).display !== 'none',
+      sticky: getComputedStyle(document.querySelector('header.shell')).position,
+    }));
+    check('the menu is not shown on a desktop', !desk.menu, JSON.stringify(desk));
+    check('the inline links are shown on a desktop', desk.links, JSON.stringify(desk));
+    check('the desktop header is left alone', desk.sticky !== 'sticky', JSON.stringify(desk));
+    await ctx.close();
+  }
+
   await browser.close();
   if (server) server.close();
 
