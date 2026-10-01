@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workflow Audit | Polisha Systems</title>
+<meta name="description" content="Twelve questions, about six minutes, no call. Find out roughly how many hours a week your business loses to work a system could do.">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#ffffff">
+<link rel="canonical" href="https://systems.getpolisha.com/audit">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://systems.getpolisha.com/audit">
+<meta property="og:title" content="How many hours a week is your business losing?">
+<meta property="og:description" content="Twelve questions, about six minutes, no call. Your number on screen at the end.">
+<meta property="og:image" content="https://systems.getpolisha.com/og-image-2.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="How many hours a week is your business losing?">
+<meta name="twitter:description" content="Twelve questions, about six minutes, no call. Your number on screen at the end.">
+<meta name="twitter:image" content="https://systems.getpolisha.com/og-image-2.jpg">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231763d7'/><text y='72' x='50' text-anchor='middle' font-family='system-ui' font-size='62' font-weight='700' fill='white'>P</text></svg>">
+<link rel="preload" as="font" type="font/woff2" href="/fonts/ibm-plex-sans-400.woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body class="audit-page">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="shell">
+  <nav class="nav" aria-label="Primary">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">P</span>
+      <span class="brand-name">Polisha <small>Systems</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="/#problems">Problems we solve</a>
+      <a href="/#pricing">Pricing</a>
+      <a class="nav-cta" href="/#contact" data-track="audit_nav_contact">Get in touch</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main" class="audit-main">
+  <div class="shell">
+
+    <!-- ⚠️  THIS HEADING IS NOT DECORATION AND MUST NOT BE REMOVED.
+         The visible hook below lives inside #audit-intro, which is hidden the
+         moment somebody starts the audit. That left the page with no level
+         one heading for the entire twelve questions, which axe caught and a
+         screen reader user would have felt as a page that lost its title
+         halfway through. This one stays regardless of which panel is open. -->
+    <h1 class="vh">Workflow audit</h1>
+
+    <!-- ===================== Intro ===================== -->
+    <section class="audit-intro" id="audit-intro">
+      <p class="section-label">Free workflow audit</p>
+      <h2 class="audit-hook">How many hours a week is your business losing to work a system could do?</h2>
+      <p class="audit-lead">Twelve questions, about six minutes, no call and no obligation. We do the arithmetic on your own answers and show you the working.</p>
+      <ul class="checks">
+        <li><i aria-hidden="true">&#10003;</i>No technical knowledge needed</li>
+        <li><i aria-hidden="true">&#10003;</i>Your number on screen at the end</li>
+        <li><i aria-hidden="true">&#10003;</i>We will say if nothing is worth building</li>
+      </ul>
+      <button class="button primary" type="button" id="audit-start" data-track="audit_start">Start the audit <span class="arrow" aria-hidden="true">&rarr;</span></button>
+      <noscript><p class="audit-noscript">This audit needs JavaScript to work out your result. If you would rather not turn it on, <a href="/#contact">tell us what is slowing you down</a> and we will go through it with you.</p></noscript>
+    </section>
+
+    <!-- ===================== Questions ===================== -->
+    <section class="audit-quiz" id="audit-quiz" hidden aria-labelledby="audit-q-text">
+      <div class="audit-progress">
+        <div class="audit-bar"><span id="audit-bar-fill"></span></div>
+        <p class="audit-count" id="audit-count" aria-live="polite">Question 1 of 12</p>
+      </div>
+
+      <form id="audit-form" novalidate>
+        <fieldset class="audit-step">
+          <legend class="audit-section-label" id="audit-section">Your process</legend>
+          <p class="audit-question" id="audit-q-text">&nbsp;</p>
+          <p class="audit-hint" id="audit-hint" hidden></p>
+          <div class="audit-options" id="audit-options" role="group" aria-labelledby="audit-q-text"></div>
+          <p class="audit-error" id="audit-error" role="alert" hidden>Choose an answer to continue.</p>
+        </fieldset>
+
+        <div class="audit-nav">
+          <button class="button secondary" type="button" id="audit-back">Back</button>
+          <button class="button primary" type="submit" id="audit-next">Next <span class="arrow" aria-hidden="true">&rarr;</span></button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ===================== Result ===================== -->
+    <section class="audit-result" id="audit-result" hidden aria-labelledby="audit-result-head" tabindex="-1">
+      <p class="section-label">Your result</p>
+      <h2 id="audit-result-head">On your own answers, about <span id="audit-hours">0</span> hours a week.</h2>
+      <p class="audit-result-lead" id="audit-result-lead"></p>
+
+      <!-- ⚠️  THE WORKING IS SHOWN ON PURPOSE AND MUST NOT BE HIDDEN.
+           A number a visitor cannot check is a guess with a decimal point on
+           it. Every row below traces to a question they answered, which is
+           also what makes the conclusion persuasive rather than flattering. -->
+      <div class="audit-working">
+        <h3>Where that comes from</h3>
+        <table class="audit-table">
+          <thead><tr><th scope="col">What</th><th scope="col">From your answers</th><th scope="col">Hours</th></tr></thead>
+          <tbody id="audit-parts"></tbody>
+        </table>
+        <p class="audit-capped" id="audit-capped" hidden></p>
+      </div>
+
+      <div class="audit-cols">
+        <div class="audit-col" id="audit-stalls-col">
+          <h3>Where your process stalls</h3>
+          <ul class="audit-list" id="audit-stalls"></ul>
+        </div>
+        <div class="audit-col" id="audit-opps-col">
+          <h3>What we would look at first</h3>
+          <ol class="audit-list audit-ranked" id="audit-opps"></ol>
+        </div>
+      </div>
+
+      <div class="boundaries" id="audit-human-block">
+        <h3>What should stay human</h3>
+        <p>You told us these need a person, so a system we built would be designed around them rather than over them.</p>
+        <ul class="boundary-list" id="audit-human"></ul>
+        <p class="boundaries-note">Where an AI assistant helps, it drafts and suggests. A person approves anything that matters.</p>
+      </div>
+
+      <div class="audit-verdict" id="audit-verdict">
+        <h3 id="audit-verdict-head"></h3>
+        <p id="audit-verdict-body"></p>
+        <div class="actions" id="audit-verdict-actions"></div>
+      </div>
+
+      <!-- ===================== Capture ===================== -->
+      <!-- ⚠️  THE RESULT IS ALREADY VISIBLE ABOVE THIS, DELIBERATELY.
+           The plan was to gate the result behind an email. Showing it first
+           and asking afterwards gets fewer addresses and better ones: anyone
+           who types an address here has read their own number and wants the
+           write-up, rather than guessing whether the thing behind the wall is
+           worth an address. If you want the hard gate instead, move this
+           block above the result and hide the rest until it is sent. -->
+      <div class="audit-capture" id="audit-capture">
+        <h3>Want this written up?</h3>
+        <p>We will email you this result plus the one page version you can show someone else. No newsletter unless you ask for one below.</p>
+        <form class="form-card" id="audit-capture-form" method="post" action="/api/audit" novalidate>
+          <div class="field">
+            <label for="au-name">Your name</label>
+            <input id="au-name" name="name" type="text" autocomplete="name" maxlength="100" required aria-describedby="au-name-error">
+            <p class="field-error" id="au-name-error" hidden></p>
+          </div>
+          <div class="field">
+            <label for="au-email">Email</label>
+            <input id="au-email" name="email" type="email" autocomplete="email" maxlength="254" required aria-describedby="au-email-error">
+            <p class="field-error" id="au-email-error" hidden></p>
+          </div>
+          <div class="field au-trap" aria-hidden="true">
+            <label for="au-website">Website</label>
+            <input id="au-website" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <label class="consent">
+            <input type="checkbox" id="au-subscribe" name="subscribe">
+            <span>Send me occasional notes on operations systems</span>
+          </label>
+          <button class="button primary" type="submit" id="au-submit" data-track="audit_capture">Send me the write up</button>
+          <p class="form-status" id="au-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <p class="audit-restart"><button type="button" class="linkish" id="audit-restart">Start again</button></p>
+    </section>
+
+  </div>
+</main>
+
+<footer class="shell">
+  <div class="foot">
+    <p>&copy; 2026 Polisha</p>
+    <p><a href="/">Back to the site</a></p>
+  </div>
+</footer>
+
+<script src="/audit-score.js"></script>
+<script src="/audit.js" defer></script>
+</body>
+</html>
