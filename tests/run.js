@@ -261,7 +261,7 @@ function serve() {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
     const page = await ctx.newPage();
     await page.route('**/api/contact', r => r.fulfill({ status: 503, contentType: 'application/json',
-      body: '{"ok":false,"error":"The form is not available right now. Please email tobaina@gmail.com directly."}' }));
+      body: '{"ok":false,"error":"The form is not available right now. Please reach us through the LinkedIn link on this page."}' }));
     await page.goto(BASE, { waitUntil: 'networkidle' });
     const typed = 'This message must survive a failure.';
     await page.fill('#cf-name', 'Test'); await page.fill('#cf-email', 'a@b.co'); await page.fill('#cf-message', typed);
@@ -272,7 +272,12 @@ function serve() {
       cls: document.getElementById('cf-status').className,
       kept: document.getElementById('cf-message').value === t,
     }), typed);
-    check('failure names the fallback email address', /tobaina@gmail\.com/.test(bad.status), bad.status);
+    /* ⚠️  NO ADDRESS, ON PURPOSE. This used to require the personal inbox
+       in the failure message, which republished it to every visitor who hit a
+       broken form. The page shows no address at all now, so the requirement
+       is that a failure still routes the visitor somewhere real. */
+    check('failure still routes the visitor somewhere real',
+      /linkedin/i.test(bad.status) && !/@/.test(bad.status), bad.status);
     check('failure is styled as an error', /bad/.test(bad.cls));
     check('failure never loses what the visitor typed', bad.kept);
 
@@ -281,7 +286,10 @@ function serve() {
     await page.click('#cf-submit');
     await page.waitForTimeout(700);
     check('dropped connection still tells the visitor what to do',
-      await page.evaluate(() => /tobaina@gmail\.com/.test(document.getElementById('cf-status').textContent)));
+      await page.evaluate(() => {
+        const t = document.getElementById('cf-status').textContent;
+        return t.trim().length > 0 && !/@/.test(t);
+      }));
     await ctx.close();
   }
 
@@ -291,7 +299,7 @@ function serve() {
     const page = await ctx.newPage();
     await page.goto(BASE, { waitUntil: 'networkidle' });
     const trap = await page.evaluate(() => {
-      const el = document.getElementById('cf-company');
+      const el = document.getElementById('cf-website');
       const r = el.getBoundingClientRect();
       return { exists: !!el, offscreen: r.right < 0 || r.bottom < 0, notTabbable: el.tabIndex === -1,
                hiddenFromAT: !!el.closest('[aria-hidden="true"]') };
@@ -434,7 +442,7 @@ function serve() {
         walkthroughHasNoPoster: !!video && !video.getAttribute('poster'),
         // The second audience is addressed, and can act on it.
         hiringPresent: !!hiring,
-        hiringLinks: hiring ? [...hiring.querySelectorAll('a')].map(a => a.getAttribute('href')) : [],
+        mailtos: [...document.querySelectorAll('a[href^="mailto:"]')].map(a => a.getAttribute('href')),
         // A price is visible without scrolling past the hero.
         priceInHero: !!price && price.getBoundingClientRect().top < heroBottom + 1,
         priceText: price ? price.textContent : '',
@@ -444,11 +452,13 @@ function serve() {
     check('walkthrough section exists', r.walkthroughPresent);
     check('walkthrough stays hidden while no file is named', r.walkthroughHidden && r.walkthroughDeclaresNoFile);
     check('hidden walkthrough loads no media', r.walkthroughHasNoSource && r.walkthroughHasNoPoster);
-    check('hiring section exists', r.hiringPresent);
-    check('hiring offers LinkedIn and email',
-      r.hiringLinks.some(h => /linkedin\.com/.test(h || '')) &&
-      r.hiringLinks.some(h => /^mailto:/.test(h || '')),
-      r.hiringLinks.join(' | '));
+    /* The hiring section was removed when this became a company site: it
+       answered "are you available to hire", which is the wrong question on a
+       page selling builds, and it was the last thing speaking in one person's
+       voice. Asserted absent so it cannot drift back. */
+    check('the hiring section is gone', !r.hiringPresent);
+    check('no mailto anywhere on the page',
+      r.mailtos.length === 0, r.mailtos.join(' | '));
     check('a price is shown in the hero', r.priceInHero);
     check('the hero price names a real currency amount', /CA\$\s?\d/.test(r.priceText), r.priceText.slice(0, 80));
     await ctx.close();
@@ -498,7 +508,7 @@ function serve() {
     });
 
     // The announcement must invite both kinds of work and must not date itself.
-    check('announcement names website work', /website/i.test(r.notice), r.notice);
+    check('announcement invites a project', /taking on new projects/i.test(r.notice), r.notice);
     check('announcement carries no expiring date',
       !/this quarter|this month|this year/i.test(r.notice), r.notice);
     check('announcement links to the contact form', r.noticeLinksToContact);
@@ -549,7 +559,11 @@ function serve() {
        in the table below. Nothing to update when a price changes; it only
        fails when the two genuinely disagree, which is the bug that once had
        this page quoting three different build prices at the same time. */
-    const heroFigures = r.heroPrice.match(/CA\$[\d,]+/g) || [];
+    /* ⚠️  TRIM TRAILING PUNCTUATION. `CA\$[\d,]+` is greedy over commas, so
+       "from CA$4,800, always quoted" yielded "CA$4,800," and matched nothing
+       in the table. The check then failed on a page whose prices agreed
+       perfectly, which is the kind of false alarm that gets a suite ignored. */
+    const heroFigures = (r.heroPrice.match(/CA\$[\d,]+/g) || []).map(f => f.replace(/,+$/, ''));
     const tableAmounts = r.priceRows.map(x => x.amount).join(' ');
     check('the hero names at least one price', heroFigures.length > 0, r.heroPrice.slice(0, 80));
     const orphaned = heroFigures.filter(f => !tableAmounts.includes(f));
@@ -571,14 +585,22 @@ function serve() {
     const site = priced('business site');
     const custom = priced('custom functionality');
     const diagnostic = priced('diagnostic');
-    const build = priced('first-phase build');
-    const full = priced('full operations system');
+    const build = priced('business systems');
+    const full = priced('larger systems');
     const care = priced('care plan');
     const change = priced('change work');
 
-    check('every priced row names an amount',
-      r.priceRows.length >= 8 && r.priceRows.every(x => /CA\$\s?\d/.test(x.amount)),
+    /* One row deliberately carries no figure: the largest engagement is
+       quoted after a check or a diagnostic, because publishing a ceiling was
+       sending small owners away before they reached the free process check.
+       Every OTHER row must still name a number, or "quoted" spreads. */
+    const unpriced = r.priceRows.filter(x => !/CA\$\s?\d/.test(x.amount));
+    check('every priced row but one names an amount',
+      r.priceRows.length >= 8 && unpriced.length === 1,
       r.priceRows.map(x => x.title + '=' + x.amount).join(' | '));
+    check('the unpriced row is the largest engagement',
+      unpriced.length === 1 && /larger systems/i.test(unpriced[0].title),
+      unpriced.map(x => x.title).join(' | '));
 
     // Small website work must stay a stated number, never a quote cycle.
     /* Anchored to the Canadian freelance band (roughly CA$599-2,995 one-time
@@ -602,12 +624,11 @@ function serve() {
        asked a stranger to commit to the top of it. Both must exist: dropping
        the ceiling caps the business, dropping the first phase puts the entry
        price out of reach of the people most likely to say yes first. */
-    check('a first phase is reachable at CA$4,800-7,500',
-      !!build && /CA\$4,800.7,500/.test(build.amount), build ? build.amount : 'missing');
-    check('the ceiling for a full system still exists',
-      !!full && /^from CA\$12,000$/.test(full.amount), full ? full.amount : 'missing');
-    check('the first phase is priced below the full system',
-      !!build && !!full, 'both rows must be present');
+    check('business systems start at CA$4,800',
+      !!build && /^from CA\$4,800$/.test(build.amount), build ? build.amount : 'missing');
+    check('larger systems are quoted rather than priced',
+      !!full && !/\d/.test(full.amount), full ? full.amount : 'missing');
+    check('both system rows are present', !!build && !!full, 'both rows must be present');
     // "Fixed scope in writing" told a buyer nothing about what arrives.
     check('the build says what is actually delivered',
       !!build && /handover/i.test(build.detail) && /production/i.test(build.detail),
@@ -622,11 +643,13 @@ function serve() {
        competitive has to fail here rather than ship. If a future edit really
        does make the work faster, change the measured record in the comment
        above the row first, then these numbers. */
-    check('the first phase quotes four weeks, not two',
+    check('business systems quote four weeks, not two',
       !!build && /four weeks/i.test(build.detail) && !/two weeks/i.test(build.detail),
       build ? build.detail : 'missing');
-    check('the full system is quoted at six weeks and up',
+    check('larger systems are quoted at six weeks and up',
       !!full && /six weeks/i.test(full.detail), full ? full.detail : 'missing');
+    check('the priced system row says a quote follows a check or a diagnostic',
+      !!build && /quoted in writing/i.test(build.detail), build ? build.detail : 'missing');
     check('every website row states how long it takes',
       [landing, site, custom].every(x => x && /week/i.test(x.detail)),
       [landing, site, custom].map(x => x ? x.title + ': ' + x.detail : 'missing').join(' | '));
@@ -649,12 +672,9 @@ function serve() {
     check('price parsing reads a range as two figures',
       JSON.stringify(figures('CA$4,800\u20137,500')) === '[4800,7500]',
       JSON.stringify(figures('CA$4,800\u20137,500')));
-    check('the first-phase floor sits above the fixed-price website work',
+    check('the system floor sits above the fixed-price website work',
       floorOf(build) > ceilingOf(site),
       (build ? build.amount : '?') + ' vs ' + (site ? site.amount : '?'));
-    check('the full system starts above the first-phase ceiling',
-      floorOf(full) > ceilingOf(build),
-      (full ? full.amount : '?') + ' vs ' + (build ? build.amount : '?'));
 
     // The retainer is split, because one blended number set the wrong
     // expectation in both directions.
@@ -667,7 +687,8 @@ function serve() {
     /* Every superseded number, anywhere on the page. Each of these was live at
        some point, and each contradicted something else while it was. */
     for (const stale of ['CA\\$2,500', 'CA\\$1,800', 'CA\\$4,500', 'CA\\$6,000', 'CA\\$500.900', 'CA\\$250/mo', 'CA\\$900/mo',
-                         'CA\\$3,500', 'CA\\$6,500', 'CA\\$9,000']) {
+                         'CA\\$3,500', 'CA\\$6,500', 'CA\\$9,000',
+                         'CA\\$12,000', 'CA\\$4,800.7,500', 'CA\\$6,000.12,000']) {
       check('no superseded price survives: ' + stale.replace(/\\\\/g, ''),
         !new RegExp(stale).test(r.bodyText));
     }
@@ -689,8 +710,16 @@ function serve() {
        correct against every row for ever and cannot contradict one. */
     check('the launch offer is bounded by a count',
       /first two/i.test(r.founding), r.founding.slice(0, 160));
-    check('the launch offer is a percentage, not a fixed price',
-      /%/.test(r.founding) && !/CA\$/.test(r.founding), r.founding.slice(0, 200));
+    /* ⚠️  THE RULE IS "NO FIXED FIGURE", NOT "MUST BE A PERCENTAGE". This
+       used to require a % sign, which quietly made one legitimate offer
+       unshippable: "first two system builds free" names no figure either, and
+       so cannot drift out of step with a price row, which is the entire
+       reason the original rule existed. A percentage and a free offer both
+       pass; "CA$1,000 off" does not, because that is the one that has to be
+       re-picked by hand every time any row moves. */
+    check('the launch offer names no fixed amount',
+      !/CA\$/.test(r.founding) && (/%/.test(r.founding) || /\bfree\b/i.test(r.founding)),
+      r.founding.slice(0, 200));
     check('the launch offer says what it buys',
       /case study/i.test(r.founding), r.founding.slice(0, 200));
     check('the launch offer is not conditional on a testimonial',
@@ -780,11 +809,12 @@ function serve() {
     });
     check('structured data parses', !!ld);
     const types = ld ? (ld['@graph'] || []).map(n => n['@type']) : [];
-    check('describes a Person', types.includes('Person'));
+    check('describes an Organization, not a Person',
+      types.includes('Organization') && !types.includes('Person'), types.join(', '));
     check('describes a ProfessionalService', types.includes('ProfessionalService'));
     check('describes a WebSite', types.includes('WebSite'));
     const blob = JSON.stringify(ld || {});
-    check('structured data uses the right email', blob.includes('tobaina@gmail.com'));
+    check('structured data publishes no personal address', !blob.includes('tobaina@gmail.com'));
     check('structured data claims no outcomes', !/revenue|customers|testimonial|award/i.test(blob));
 
     const meta = await page.evaluate(() => ({
@@ -796,7 +826,101 @@ function serve() {
     check('canonical preserved', meta.canonical === 'https://tobi.getpolisha.com/');
     check('og image preserved', /og-image-2\.jpg$/.test(meta.ogImage || ''));
     check('twitter card preserved', meta.twitterCard === 'summary_large_image');
-    check('title preserved', /Tobi Aina/.test(meta.title));
+    check('title carries the company name', /Polisha Systems/.test(meta.title), meta.title);
+    await ctx.close();
+  }
+
+  /* ================================================== company voice ======
+     ⚠️  THIS SITE SPEAKS AS A COMPANY. IT USED TO SPEAK AS ONE PERSON.
+     The repositioning to Polisha Systems turned roughly forty sentences from
+     "I build" into "we build", and the failure mode is not a broken page, it
+     is one stray "I" in a paragraph nobody rereads. A person arriving from a
+     meeting with two people, who then reads "I will tell you honestly",
+     learns that the company is one person with a plural pronoun.
+
+     The single permitted exception is the newsletter checkbox, where "Send me
+     occasional notes" is the READER speaking about themselves, not the
+     business. It is matched exactly rather than allowed by regex, so a second
+     first-person sentence cannot hide behind it.
+     ====================================================================== */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const NEWSLETTER = 'Send me occasional notes on operations systems';
+    const copy = await page.evaluate((exception) => {
+      const text = document.body.innerText.replace(/\s+/g, ' ');
+      return { full: text, stripped: text.split(exception).join(' ') };
+    }, NEWSLETTER);
+
+    check('the newsletter exception is still on the page',
+      copy.full.includes(NEWSLETTER));
+
+    const voice = [
+      [/\bI\b/, 'first person "I"'],
+      [/\bmy\b/i, '"my"'],
+      [/\bme\b/i, '"me" outside the newsletter line'],
+      [/\bmine\b/i, '"mine"'],
+    ];
+    for (const [re, label] of voice) {
+      const hit = copy.stripped.match(re);
+      check('company voice: no ' + label, !hit,
+        hit ? '...' + copy.stripped.slice(Math.max(0, hit.index - 60), hit.index + 60) + '...' : '');
+    }
+
+    const banned = [
+      [/Tomi/i, 'a second name'],
+      [/Tobi Aina/i, 'a personal name'],
+      [/Cambridge|Kitchener|Waterloo/i, 'a location limit'],
+      [/\bhiring\b/i, 'the hiring pitch'],
+      [/tobaina@gmail/i, 'a personal address'],
+      [/no-code/i, '"no-code"'],
+      [/generic developer/i, '"generic developer"'],
+      [/[\u2013\u2014]/, 'an en or em dash'],
+    ];
+    for (const [re, label] of banned) {
+      const hit = copy.full.match(re);
+      check('copy contains no ' + label, !hit,
+        hit ? '...' + copy.full.slice(Math.max(0, hit.index - 60), hit.index + 60) + '...' : '');
+    }
+    await ctx.close();
+  }
+
+  /* ============================================ the free process check ===
+     The only no-cost step on the page and the main conversion, so it is
+     asserted structurally rather than left to the eye. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const chk = await page.evaluate(() => {
+      const sec = document.getElementById('process-check');
+      return {
+        present: !!sec,
+        steps: sec ? sec.querySelectorAll('.check-step').length : 0,
+        numbers: sec ? [...sec.querySelectorAll('.check-num')].map(n => n.textContent.trim()) : [],
+        note: sec ? (sec.querySelector('.check-note') || {}).innerText || '' : '',
+        ctas: [...document.querySelectorAll('[data-need="check"]')].length,
+      };
+    });
+    check('the free process check section exists', chk.present);
+    check('it is a three step sequence', chk.steps === 3, 'got ' + chk.steps);
+    check('the steps are numbered in order',
+      chk.numbers.join('') === '123', chk.numbers.join(','));
+    check('it separates the free check from the paid diagnostic',
+      /diagnostic/i.test(chk.note) && /free process check/i.test(chk.note), chk.note);
+    check('more than one call to action offers the free check', chk.ctas >= 2, 'got ' + chk.ctas);
+
+    /* Clicking the hero call to action must arrive at the form with the
+       option already chosen. Without this the visitor is asked, immediately
+       after saying what they want, to say it again. */
+    await page.click('[data-need="check"]');
+    await page.waitForTimeout(300);
+    const selected = await page.evaluate(() => document.getElementById('cf-need').value);
+    check('the call to action preselects the free process check',
+      selected === 'check', 'select is "' + selected + '"');
     await ctx.close();
   }
 

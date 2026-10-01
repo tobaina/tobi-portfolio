@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Tobi Aina — operations systems portfolio
+   Polisha Systems, website and business systems
    Design system notes
    --------------------------------------------------------------------------
    Same brand family as verdict.getpolisha.com:
@@ -7,7 +7,7 @@
      - white surfaces, light blue utility areas, dark navy product frame
      - Polisha blue (#1763d7, shared with Verdict) reserved for actions,
        selected states and small signals
-     - a technical grid behind the hero, 11–17px corner radii
+     - a technical grid behind the hero, 11 to 17px corner radii
      - real product screens as the visual proof
 
    Deliberately absent: serif type, italics, gradient headline text, coloured
@@ -35,9 +35,16 @@
   /* Ink */
   --ink: #0a0c10;
   --body: #4e5663;          /* 7.4:1 on white  */
-  --muted: #6b7483;         /* 4.7:1 on white  */
+  /* ⚠️  4.6:1 ON THE TINTED BACKGROUND, NOT JUST ON WHITE. This was #6b7483,
+     which is 4.72:1 on white and passes there, but only 4.43:1 on --ice, and
+     four blocks of muted text sit on --ice: the process check note, the
+     product note, and the two small section headings. Judging a muted colour
+     against white alone is how a page ends up accessible in the places you
+     checked and not in the places you did not. #687180 is 4.63:1 on --ice and
+     4.93:1 on white, and is three steps darker, which is invisible. */
+  --muted: #687180;         /* 4.9:1 on white, 4.6:1 on --ice */
 
-  /* Navy — the product frame */
+  /* Navy, the product frame */
   --navy: #111d35;
   --navy-2: #1a2943;
   --navy-line: rgba(255, 255, 255, .11);
@@ -303,7 +310,7 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
 .button.dark:hover { background: #0c1626; }
 
 /* --------------------------- Product frame ----------------------------- */
-/* Solid surface — no backdrop blur, no translucency. */
+/* Solid surface, no backdrop blur, no translucency. */
 .product {
   position: relative;
   margin: 0;
@@ -669,7 +676,7 @@ section { padding: 110px 0; }
 }
 .founding b { color: var(--ink); }
 
-/* ----------------------------- What I build ---------------------------- */
+/* ---------------------------- What we build ---------------------------- */
 .services { background: var(--ice); }
 .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .service {
@@ -704,7 +711,7 @@ section { padding: 110px 0; }
 .service h3 { margin: 0 0 8px; font-size: 21px; }
 .service p { margin: 0; color: var(--body); font-size: 13px; }
 
-/* ── Other ways I can help ────────────────────────────────────────────────
+/* ── Other ways we can help ────────────────────────────────────────────────
    Deliberately a different, lighter shape from the three cards above. If these
    four were styled as equal cards the section would read as seven services of
    equal weight, which is the "will do anything" look the three-card layout
@@ -730,6 +737,68 @@ section { padding: 110px 0; }
 }
 .service-minor h4 { margin: 0 0 6px; color: var(--ink); font-size: 15px; font-weight: 600; }
 .service-minor p { margin: 0; color: var(--body); font-size: 13px; line-height: 1.6; }
+
+/* ── Who we help ──────────────────────────────────────────────────────────
+   Named trades, so a visitor scanning for themselves finds their own word.
+   Deliberately plain: it is a qualifier, not a seventh service. */
+.who { margin-top: 34px; padding-top: 28px; border-top: 1px solid var(--line); }
+.who-head {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.who p { margin: 0; max-width: 82ch; color: var(--body); font-size: 14px; line-height: 1.7; }
+
+/* ── The free process check ───────────────────────────────────────────────
+   The main conversion on the page, and the only no-cost step on it, so it
+   sits directly under the hero rather than beside the paid rows. Tinted
+   background because it has to read as an offer, not as another explanatory
+   block in a page that already has several. */
+.check-offer {
+  padding: 62px 0;
+  background: var(--ice);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.check-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+}
+.check-step {
+  padding: 22px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.check-num {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+.check-step p { margin: 0; color: var(--body); font-size: 14px; line-height: 1.65; }
+.check-note { max-width: 78ch; margin: 0 0 24px; color: var(--muted); font-size: 12.5px; line-height: 1.7; }
+.check-cta { margin: 0; }
+
+/* A word, not a number, so it must not inherit the tabular figures and the
+   weight the priced rows use. */
+.price-quoted { color: var(--muted); font-weight: 600; }
+.field-optional { color: var(--muted); font-weight: 400; }
 
 /* ------------------------------- Pricing ------------------------------- */
 .engagement { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -843,7 +912,7 @@ section { padding: 110px 0; }
   background: var(--blue);
   color: #fff;
 }
-/* A single thin ruled circle — part of the technical grid language. */
+/* A single thin ruled circle, part of the technical grid language. */
 .contact-box::after {
   content: "";
   position: absolute;
@@ -965,9 +1034,11 @@ section { padding: 110px 0; }
 }
 .consent input {
   flex: none;
-  width: 16px;
-  height: 16px;
-  margin: 3px 0 0;
+  /* 20px box in a row with padding, so the thumb target is comfortably past
+     the 16px the browser defaults to. */
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
   accent-color: var(--blue);
   cursor: pointer;
 }
@@ -1085,27 +1156,10 @@ footer {
   background: #000;
 }
 
-/* ------------------------------- Hiring -------------------------------
-   The second audience, given its own band rather than its own page: one
-   short statement and two ways to act, kept visually lighter than the build
-   pitch above it so it cannot compete with it. */
-.hiring { padding-top: 0; }
-.hiring-box {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 32px;
-  padding: 30px 32px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-l);
-  background: var(--white);
-}
-.hiring-box h2 { margin: 8px 0 10px; font-size: clamp(22px, 2.4vw, 28px); }
-.hiring-box p { margin: 0; max-width: 70ch; color: var(--body); font-size: 15px; line-height: 1.68; }
-.hiring-actions { display: grid; gap: 10px; justify-items: stretch; }
-
 /* ============================ Tablet ================================== */
 @media (max-width: 980px) {
+  .check-steps { grid-template-columns: 1fr; }
+  .check-offer { padding: 46px 0; }
   .hero { grid-template-columns: 1fr; min-height: auto; }
   .hero-copy { max-width: 690px; }
   .product { max-width: 760px; }
@@ -1123,8 +1177,6 @@ footer {
   .founder { grid-template-columns: 130px 1fr; }
   .founder img { width: 130px; }
   .founder .button { grid-column: 2; justify-self: start; }
-  .hiring-box { grid-template-columns: 1fr; gap: 22px; }
-  .hiring-actions { justify-items: start; }
 }
 
 /* ============================= Mobile ================================= */
@@ -1132,7 +1184,6 @@ footer {
   .shell { width: min(100% - 28px, 1180px); }
   .notice { font-size: 10px; }
   .nav-links a:not(.nav-cta) { display: none; }
-  .brand small { display: none; }
 
   .hero { gap: 48px; padding: 65px 0 78px; }
   .hero-price { font-size: 13px; }
@@ -1140,8 +1191,6 @@ footer {
   .hero-services i { margin: 0 5px; }
   .service-minor-grid { grid-template-columns: 1fr; gap: 20px; }
   .service-more { margin-top: 32px; padding-top: 24px; }
-  .hiring-box { padding: 24px 20px; }
-  .hiring-actions { justify-items: stretch; }
   .hero h1 { font-size: clamp(38px, 11vw, 56px); }
   .hero-copy { font-size: 16px; }
 

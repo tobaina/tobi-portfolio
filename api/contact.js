@@ -1,5 +1,5 @@
 /* ==========================================================================
-   POST /api/contact — the enquiry form's endpoint.
+   POST /api/contact, the enquiry form's endpoint.
 
    Why this exists: every call to action on this site used to be a mailto:
    link. On a phone that often opens nothing at all, and the enquiry is lost
@@ -34,7 +34,7 @@ const TO = "tobaina@gmail.com";
 
    ⚠️  UNREACHABLE WITHOUT A DELIBERATE TICK. `unsubscribed: false` records
    the consent just given, which does resubscribe someone who previously left
-   and has now opted in again — right, but only because getting here requires
+   and has now opted in again. That is right, but only because getting here requires
    the box. If a caller ever appears that does not require one, this line
    quietly becomes a way of undoing people's unsubscribes.
 
@@ -186,7 +186,7 @@ async function addToMarketingList(email, key) {
   }
 }
 
-const LIMITS = { name: 100, email: 254, message: 5000 };
+const LIMITS = { name: 100, email: 254, message: 5000, phone: 40, company: 200 };
 
 /* The contact form's "What do you need help with?" dropdown.
    ⚠️  ALLOWLIST, NOT A STRING FIELD. Everything else on this form is the
@@ -194,9 +194,10 @@ const LIMITS = { name: 100, email: 254, message: 5000 };
    This one is a fixed set of categories, so it is looked up rather than
    copied: a hand-written POST can send `need: "<anything>"` just as easily
    as the real form can, and an unvalidated value would be attacker-chosen
-   text appearing in my inbox under a label that says it came from a menu.
+   text appearing in our inbox under a label that says it came from a menu.
    An unknown value is treated exactly like an untouched dropdown. */
 const NEEDS = {
+  check: "Free process check",
   website: "Website or landing page",
   redesign: "Existing website redesign",
   system: "Business system or portal",
@@ -252,13 +253,24 @@ module.exports = async function handler(req, res) {
   // Honeypot. A real person never sees this field, so anything in it is a
   // bot. Answer as if it worked -- telling a bot it failed only teaches it
   // to try again.
-  if (clean(body.company, 200)) {
+  //
+  // ⚠️  THE TRAP IS `website`, NOT `company`. It used to be `company`, which
+  // is now a real, visible, optional field on the form. If this still read
+  // `company`, every honest visitor who filled in their company name would
+  // have been answered with a cheerful 200 and silently discarded. Keep this
+  // name in step with the hidden input in index.html.
+  if (clean(body.website, 200)) {
     return res.status(200).json({ ok: true });
   }
 
   const name = clean(body.name, LIMITS.name);
   const email = clean(body.email, LIMITS.email);
   const message = clean(body.message, LIMITS.message);
+  // Both optional, both the visitor's own words, both capped and labelled as
+  // free text in the notification so they are never mistaken for a value this
+  // form validated.
+  const phone = clean(body.phone, LIMITS.phone);
+  const company = clean(body.company, LIMITS.company);
   // Strictly `=== true`. A missing field, "false", "off", 0 or anything else
   // a stray client might send is a no, because the only thing that may turn
   // this on is somebody ticking the box.
@@ -269,8 +281,8 @@ module.exports = async function handler(req, res) {
     Object.prototype.hasOwnProperty.call(NEEDS, body.need) ? NEEDS[body.need] : NEED_UNSTATED;
 
   const errors = {};
-  if (!name) errors.name = "Please tell me your name.";
-  if (!email) errors.email = "Please add an email address so I can reply.";
+  if (!name) errors.name = "Please tell us your name.";
+  if (!email) errors.email = "Please add an email address so we can reply.";
   else if (!looksLikeEmail(email)) errors.email = "That email address does not look right.";
   if (!message) errors.message = "Please describe what is happening.";
   else if (message.length < MIN_MESSAGE) errors.message = "A sentence or two would help.";
@@ -295,12 +307,17 @@ module.exports = async function handler(req, res) {
 
   if (!key || !from) {
     // Loud in the log, vague to the visitor -- configuration problems are
-    // not the visitor's business, and they must never lose the message
-    // without being told to use the email address instead.
+    // not the visitor's business.
+    //
+    // ⚠️  NO ADDRESS IN THIS MESSAGE. It used to name the inbox directly,
+    // which republished a personal address to every visitor who hit a
+    // misconfigured form. The page no longer shows an address anywhere, so
+    // the fallback points at a route that does exist. When a business
+    // address is chosen, name it here and in the two messages below.
     console.error("[contact] RESEND_API_KEY or EMAIL_FROM is not configured.");
     return res.status(503).json({
       ok: false,
-      error: "The form is not available right now. Please email " + TO + " directly.",
+      error: "The form is not available right now. Please reach us through the LinkedIn link on this page.",
     });
   }
 
@@ -312,6 +329,8 @@ module.exports = async function handler(req, res) {
     "New enquiry from tobi.getpolisha.com\n\n" +
     "Name:  " + name + "\n" +
     "Email: " + email + "\n" +
+    "Phone: " + (phone || "Not given") + "\n" +
+    "Firm:  " + (company || "Not given") + "\n" +
     "Needs: " + need + "\n" +
     "List:  " + listOutcome + "\n\n" +
     message + "\n";
@@ -327,7 +346,7 @@ module.exports = async function handler(req, res) {
         from: from,
         to: [TO],
         reply_to: email,          // replying in the inbox reaches the sender
-        subject: "Website enquiry — " + name,
+        subject: "Website enquiry: " + name,
         text: text,
       }),
     });
@@ -337,14 +356,14 @@ module.exports = async function handler(req, res) {
       console.error("[contact] Resend refused the message:", response.status, detail);
       return res.status(502).json({
         ok: false,
-        error: "The message could not be sent. Please email " + TO + " directly.",
+        error: "The message could not be sent. Please reach us through the LinkedIn link on this page.",
       });
     }
   } catch (error) {
     console.error("[contact] Could not reach Resend:", error && error.message);
     return res.status(502).json({
       ok: false,
-      error: "The message could not be sent. Please email " + TO + " directly.",
+      error: "The message could not be sent. Please reach us through the LinkedIn link on this page.",
     });
   }
 

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Tobi Aina — portfolio behaviour
+   Polisha Systems, page behaviour
    Two small pieces only: the case-study tab set and the scroll reveal.
    No analytics, no tracking, no third-party scripts.
    ========================================================================== */
@@ -128,8 +128,8 @@
 
     function validate(values) {
       var errors = {};
-      if (!values.name) errors.name = "Please tell me your name.";
-      if (!values.email) errors.email = "Please add an email address so I can reply.";
+      if (!values.name) errors.name = "Please tell us your name.";
+      if (!values.email) errors.email = "Please add an email address so we can reply.";
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(values.email)) errors.email = "That email address does not look right.";
       if (!values.message) errors.message = "Please describe what is happening.";
       else if (values.message.length < 10) errors.message = "A sentence or two would help.";
@@ -194,7 +194,7 @@
           if (result.ok && result.data.ok) {
             form.reset();
             track("contact_form_submitted");
-            setStatus("Thank you \u2014 that reached me. I reply to every message, usually the same day.", "ok");
+            setStatus("Thank you. We will reply within one working day.", "ok");
             return;
           }
           if (result.data.errors) {
@@ -206,15 +206,15 @@
             return;
           }
           track("contact_form_failed", { stage: "server" });
-          setStatus(result.data.error || "Something went wrong. Please email tobaina@gmail.com directly.", "bad");
+          setStatus(result.data.error || "Something went wrong. Please try again in a moment.", "bad");
         })
         .catch(function () {
           track("contact_form_failed", { stage: "network" });
-          setStatus("Something went wrong. Please email tobaina@gmail.com directly.", "bad");
+          setStatus("Something went wrong. Please try again in a moment.", "bad");
         })
         .then(function () {
           submit.disabled = false;
-          submit.textContent = "Send it to me";
+          submit.textContent = "Send it to us";
         });
     });
   }
@@ -229,6 +229,50 @@
       track(el.getAttribute("data-track") + "_click");
     });
   });
+
+  /* Any call to action carrying data-need preselects that option in the
+     dropdown, so somebody who clicked "Book a free 30 minute process check"
+     does not arrive at the form and have to say so again. Guarded on the
+     option existing: if the dropdown ever loses a value the click must still
+     scroll to the form rather than throw. */
+  Array.prototype.slice.call(document.querySelectorAll("[data-need]")).forEach(function (el) {
+    el.addEventListener("click", function () {
+      var select = document.getElementById("cf-need");
+      if (!select) return;
+      var wanted = el.getAttribute("data-need");
+      var exists = Array.prototype.some.call(select.options, function (o) { return o.value === wanted; });
+      if (exists) select.value = wanted;
+    });
+  });
+
+  /* Each service card reports a click by its own heading. The cards are not
+     links, so this is measurement only and must never change what a click
+     does. Names only, exactly as above. */
+  Array.prototype.slice.call(document.querySelectorAll(".service, .service-minor")).forEach(function (card) {
+    card.addEventListener("click", function () {
+      var heading = card.querySelector("h3, h4");
+      if (heading) track("service_card_click", { card: heading.textContent.trim().slice(0, 40) });
+    });
+  });
+
+  /* Pricing reached, once per visit. A visitor who never sees the prices and
+     one who reads them and leaves are different problems, and without this
+     they look identical in the numbers. */
+  (function () {
+    var pricing = document.getElementById("pricing");
+    if (!pricing || typeof IntersectionObserver !== "function") return;
+    var seen = false;
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!seen && entry.isIntersecting) {
+          seen = true;
+          track("pricing_viewed");
+          observer.disconnect();
+        }
+      });
+    }, { threshold: 0.25 });
+    observer.observe(pricing);
+  })();
 
   /* ---------------------------------------------------- In-page navigation
      The nav links used to rely on CSS `scroll-behavior: smooth`. That

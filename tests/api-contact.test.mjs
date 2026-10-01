@@ -137,11 +137,46 @@ for (const v of ['true', 'on', 1, 'yes', {}]) {
   check('list failure: the email was still attempted', seen.some(u => u.endsWith('/emails')));
 }
 
-// 6. honeypot still wins, and never subscribes
+/* 6. honeypot still wins, and never subscribes
+
+   ⚠️  THE TRAP IS `website` NOW. It used to be `company`, and `company` has
+   since become a real, visible, optional field on the form. Had both stayed,
+   every honest visitor who typed their company name would have been answered
+   with a cheerful 200 and silently discarded, with no error anywhere. The
+   pair of cases below is the guard: the trap still catches a bot, and a real
+   company name still gets through. */
 {
-  const { res, calls } = await run({ ...BASE, subscribe: true, company: 'bot' }, '6.6.6.6', 'seg_123');
+  const { res, calls } = await run({ ...BASE, subscribe: true, website: 'bot' }, '6.6.6.6', 'seg_123');
   check('honeypot: answered as if it worked', res.code === 200 && res.body.ok === true);
   check('honeypot: nothing sent at all', calls.length === 0);
+}
+{
+  const { res, calls } = await run({ ...BASE, company: 'Acme Plumbing' }, '6.6.6.7');
+  const email = calls.find(c => String(c.url).endsWith('/emails'));
+  check('a real company name is not treated as a bot', res.code === 200 && res.body.ok === true);
+  check('a real company name reaches the notification',
+    !!email && /Firm:\s+Acme Plumbing/.test(email.body.text), email && email.body.text);
+}
+{
+  const { calls } = await run({ ...BASE, phone: '+1 555 0100' }, '6.6.6.8');
+  const email = calls.find(c => String(c.url).endsWith('/emails'));
+  check('a phone number reaches the notification',
+    !!email && /Phone:\s+\+1 555 0100/.test(email.body.text), email && email.body.text);
+}
+{
+  const { calls } = await run({ ...BASE }, '6.6.6.9');
+  const email = calls.find(c => String(c.url).endsWith('/emails'));
+  check('the two optional fields read as not given when blank',
+    !!email && /Phone:\s+Not given/.test(email.body.text) && /Firm:\s+Not given/.test(email.body.text),
+    email && email.body.text);
+}
+{
+  // The free process check is the main conversion, so its value must survive
+  // the allowlist rather than falling through to "Not stated".
+  const { calls } = await run({ ...BASE, need: 'check' }, '6.6.7.0');
+  const email = calls.find(c => String(c.url).endsWith('/emails'));
+  check('the free process check is an accepted need value',
+    !!email && /Needs:\s+Free process check/.test(email.body.text), email && email.body.text);
 }
 
 // 7. the routing dropdown: an allowlist, not a string field
