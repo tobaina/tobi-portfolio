@@ -371,15 +371,19 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
 /* ------------------------------ Sections ------------------------------- */
 section { padding: 88px 0; }
 
+/* ⚠️  THE LABEL SITS ABOVE THE HEADING. IT USED TO SIT BESIDE IT.
+   The old rule was `grid-template-columns: 250px 1fr` with a 55px gap, which
+   parked a one-line label in a 305px column and then left that column empty
+   for the full height of the heading beside it. Measured across the six
+   section heads on this page, that was roughly 301,000 square pixels of
+   nothing, and it read as an unfinished layout rather than as white space.
+   Stacking costs about twelve vertical pixels per section and gives the
+   headings the whole shell to use. */
 .section-head {
-  display: grid;
-  grid-template-columns: 250px 1fr;
-  gap: 55px;
-  align-items: start;
   margin-bottom: 36px;
 }
 .section-label {
-  margin: 9px 0 0;
+  margin: 0 0 12px;
   color: #5c6674;
   font-family: var(--mono);
   font-size: 9px;
@@ -820,9 +824,57 @@ section { padding: 88px 0; }
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1fr 420px;
-  gap: 48px;
+  grid-template-columns: 1fr 460px;
+  gap: 56px;
+  /* The form is seven fields tall and the copy beside it never will be.
+     Centring distributes what is left above and below instead of dumping it
+     all under the last line, where it read as a hole. */
+  align-items: center;
+}
+/* ⚠️  THE LEFT COLUMN HAS TO CARRY SOMETHING.
+   It held a heading and one sentence, about 264px of content, beside a form
+   just over 1000px tall. The remaining 768px of blue was the emptiest part of
+   the page. The fix is not a narrower column, it is giving the column a job:
+   what happens after somebody presses send is exactly what a visitor wants to
+   know at the moment they are deciding whether to. */
+.contact-next {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+  margin: 34px 0 0;
+  padding: 26px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, .22);
+  list-style: none;
+}
+.contact-next li {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 13px;
   align-items: start;
+  color: #e8f1ff;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.contact-next b { display: block; color: #fff; font-size: 15px; }
+/* ⚠️  #cfe0ff WAS 4.14:1 ON THIS BLUE AND FAILED. Measured, not guessed:
+   the panel is --blue #1763d7, and the lightest tint that clears 4.5:1 on it
+   is about #dce9ff. This uses the same #e8f1ff the paragraph above it already
+   uses, which is 4.85:1 and keeps the two blocks consistent. Any new colour
+   on this panel gets checked against #1763d7, never against white. */
+.contact-next span { color: #e8f1ff; font-size: 14px; }
+.contact-next i {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .16);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
 }
 .contact-copy h2 { margin-bottom: 18px; }
 
@@ -993,9 +1045,19 @@ footer {
 }
 /* The two routes, named directly under the buttons. Mono and wide-tracked so
    it reads as a label rather than a fourth sentence of body copy. */
+/* ⚠️  SEPARATED BY SPACE, NOT BY PUNCTUATION, AND THAT IS THE FIX.
+   This line wraps at most widths. Dots between the labels wrapped badly at
+   every one of them: as their own elements a dot could open the second line
+   ("· PORTALS · AUTOMATION", which reads as a mistake), and generated after a
+   label it could only trail the first. Neither is tidy, and no CSS can tell a
+   separator that it has landed at the end of a line. A flex row with a gap
+   removes the question entirely. Do not put the dots back. */
 .hero-services {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 20px;
+  row-gap: 6px;
   margin: 20px 0 0;
-  text-wrap: balance;
   color: var(--muted);
   font-family: var(--mono);
   font-size: 11px;
@@ -1003,8 +1065,6 @@ footer {
   letter-spacing: .13em;
   text-transform: uppercase;
 }
-.hero-services i { margin: 0 7px; color: var(--blue); font-style: normal; }
-/* Keep each label whole: it used to break as "ERP STYLE / SYSTEMS". */
 .hero-services span { white-space: nowrap; }
 
 .hero-price b { color: var(--ink); }
@@ -1120,7 +1180,6 @@ footer {
   .hero { grid-template-columns: 1fr; min-height: auto; }
   .hero-copy { max-width: 690px; }
   .product { max-width: 760px; }
-  .section-head { grid-template-columns: 1fr; gap: 13px; }
   .case-grid { grid-template-columns: 1fr; }
   .product-grid { grid-template-columns: 1fr; }
   .ba { grid-template-columns: 1fr; gap: 12px; }
