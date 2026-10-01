@@ -352,6 +352,33 @@
      not a heading promising a video that cannot play. A page arguing that
      its author builds systems that work does not get to ship a broken one.
   */
+  /* ------------------------------------------------------------- The menu
+     The menu is a <details>. It opens, closes, takes focus and answers the
+     keyboard without any of this, so none of what follows is the mechanism:
+     it is the two courtesies the element does not provide. Closing after a
+     link is used, because the panel otherwise stays open over the section
+     the visitor just asked for; and closing on Escape or on a tap outside,
+     because every other menu on the web does. If this block never runs the
+     menu still works, which is the whole reason it is a <details>.
+  */
+  var menu = document.querySelector("details.menu");
+  if (menu) {
+    menu.addEventListener("click", function (event) {
+      if (event.target.closest("a")) { menu.open = false; }
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && menu.open) {
+        menu.open = false;
+        var summary = menu.querySelector("summary");
+        if (summary) { summary.focus(); }
+      }
+    });
+    document.addEventListener("click", function (event) {
+      if (menu.open && !menu.contains(event.target)) { menu.open = false; }
+    });
+  }
+
+
   var walkthrough = document.getElementById("walkthrough");
   if (walkthrough) {
     var videoUrl = (walkthrough.getAttribute("data-video") || "").trim();

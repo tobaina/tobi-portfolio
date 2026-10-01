@@ -178,7 +178,7 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
   margin-left: 4px;
   color: var(--blue);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: .16em;
   text-transform: uppercase;
 }
@@ -189,6 +189,7 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
   color: #454c57;
   font-size: 13px;
 }
+.nav-links a:not(.nav-cta) { display: inline-flex; align-items: center; min-height: 44px; }
 .nav-links a { text-decoration: none; }
 .nav-links a:hover { color: var(--blue); }
 .nav-cta {
@@ -320,11 +321,11 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
   padding: 15px 18px;
   color: #9eabc0;
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: .11em;
   text-transform: uppercase;
 }
-.window-top b { color: #fff; font-size: 9px; }
+.window-top b { color: #fff; font-size: 11px; }
 .window-status { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
 .window-status::before {
   content: "";
@@ -348,7 +349,7 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
   display: block;
   color: #91a0b7;
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -386,7 +387,7 @@ section { padding: 88px 0; }
   margin: 0 0 12px;
   color: #5c6674;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: .16em;
   text-transform: uppercase;
@@ -444,7 +445,7 @@ section { padding: 88px 0; }
   background: var(--navy-2);
   color: var(--on-navy-mute);
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -496,7 +497,7 @@ section { padding: 88px 0; }
   margin: 0 0 9px !important;
   color: var(--on-navy-blue) !important;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: .16em;
   text-transform: uppercase;
@@ -517,7 +518,7 @@ section { padding: 88px 0; }
   margin-bottom: 5px;
   color: var(--on-navy-blue);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -673,7 +674,7 @@ section { padding: 88px 0; }
   margin: 0 0 17px;
   color: #5c6674;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: .16em;
   text-transform: uppercase;
@@ -740,7 +741,7 @@ section { padding: 88px 0; }
   margin: 0 0 6px;
   color: var(--blue);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -964,11 +965,12 @@ section { padding: 88px 0; }
 }
 .consent input {
   flex: none;
-  /* 20px box in a row with padding, so the thumb target is comfortably past
-     the 16px the browser defaults to. */
-  width: 20px;
-  height: 20px;
-  margin: 2px 0 0;
+  /* 24px, which is the floor WCAG 2.2 sets for a pointer target. It was
+     20px, chosen against the browser default of 16px rather than against
+     the standard, and 20px is a miss on a phone. */
+  width: 24px;
+  height: 24px;
+  margin: 0;
   accent-color: var(--blue);
   cursor: pointer;
 }
@@ -1021,9 +1023,28 @@ footer {
   color: var(--muted);
   font-size: 11px;
 }
-.footer-links { display: flex; flex-wrap: wrap; gap: 22px; }
-.footer-links a { text-decoration: none; }
+.footer-links { display: flex; flex-wrap: wrap; gap: 2px 22px; }
+/* An 18px link is a mouse target. These are the last links on the page and
+   on a phone they are the only navigation below the fold, so they get a box
+   a thumb can find on every device rather than only on small ones. */
+.footer-links a { display: inline-flex; align-items: center; min-height: 40px; text-decoration: none; }
 .footer-links a:hover { color: var(--blue); }
+
+/* The audit page's footer had no rule of its own. It inherited the flex row
+   written for the main footer's two children, so its two paragraphs sat on
+   one line with default margins fighting the gap, and the only link on the
+   page below the form was 14px tall. */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 22px;
+  width: 100%;
+}
+.foot p { margin: 0; }
+.foot a { display: inline-flex; align-items: center; min-height: 40px; color: inherit; text-decoration: none; }
+.foot a:hover { color: var(--blue); }
 
 /* ------------------------------- Reveal -------------------------------- */
 /* Content is never hidden. An earlier version started these blocks at
@@ -1140,7 +1161,7 @@ footer {
 .audit-count { margin: 9px 0 0; color: var(--muted); font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
 
 .audit-step { margin: 0; padding: 30px 30px 26px; border: 1px solid #d3deef; border-radius: var(--radius-l); background: var(--white); }
-.audit-section-label { padding: 0; color: #5c6674; font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+.audit-section-label { padding: 0; color: #5c6674; font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
 .audit-question { margin: 12px 0 6px; font-size: 23px; font-weight: 700; letter-spacing: -.025em; line-height: 1.25; }
 .audit-hint { margin: 0 0 4px; color: var(--muted); font-size: 13.5px; }
 .audit-options { display: grid; gap: 9px; margin-top: 17px; }
@@ -1175,7 +1196,7 @@ footer {
 .audit-working h3, .audit-col h3, .audit-verdict h3, .audit-capture h3 { margin: 0 0 14px; font-size: 17px; letter-spacing: -.02em; }
 .audit-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .audit-table th, .audit-table td { padding: 11px 10px; text-align: left; border-bottom: 1px solid var(--line-2); vertical-align: top; }
-.audit-table thead th { color: var(--muted); font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.audit-table thead th { color: var(--muted); font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
 .audit-table tbody th { font-weight: 600; }
 .audit-table td { color: var(--body); }
 .audit-table .audit-h { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); white-space: nowrap; }
@@ -1207,8 +1228,136 @@ footer {
 .audit-restart { margin: 22px 0 0; }
 .linkish { padding: 0; border: 0; background: none; color: var(--blue); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: underline; }
 
+/* ⚠️  NOTHING IN THIS FILE GOES BELOW 10px, AND THAT IS A RULE NOT A TASTE.
+   A family of mono micro labels sat at 8px and 9px: the window chrome on the
+   product mock, the gallery bar, every section label, the audit table head.
+   At 1512px they read as typography. On a phone they are a smudge, and 8px
+   is not readable on any device anybody owns. They are 10px here and 11px
+   below 980px. If a new label needs to be smaller than its neighbours, make
+   it quieter with colour or tracking, not with size. */
+
+/* ------------------------------ Menu ----------------------------------
+   Shown only below 760px, where the inline links are gone. It is a
+   <details>, so the open and close behaviour, the keyboard and the
+   accessible name all come from the browser rather than from us. */
+.menu { position: relative; display: none; }
+.menu > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+.menu > summary::-webkit-details-marker { display: none; }
+.menu > summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-top: -4px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .16s ease;
+}
+.menu[open] > summary::after { margin-top: 2px; transform: rotate(225deg); }
+.menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 60;
+  display: grid;
+  gap: 2px;
+  min-width: 238px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: #fff;
+  box-shadow: 0 20px 44px rgba(16, 32, 60, .17);
+}
+.menu-panel a {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: var(--radius-m);
+  color: var(--ink);
+  font-size: 15px;
+  text-decoration: none;
+}
+.menu-panel a:hover { background: var(--ice); }
+/* ⚠️  `.menu-panel a` IS MORE SPECIFIC THAN `.menu-cta`, so a bare
+   `.menu-cta { color: #fff }` lost and this button rendered dark ink on
+   blue. Axe caught it, not me. The element goes in the selector. */
+.menu-panel a.menu-cta {
+  justify-content: center;
+  margin-top: 6px;
+  background: var(--blue);
+  color: #fff;
+  font-weight: 600;
+}
+.menu-panel a.menu-cta:hover { background: #1250b4; color: #fff; }
+
 /* ============================ Tablet ================================== */
 @media (max-width: 980px) {
+  /* ⚠️  THE HEADER FOLLOWS YOU DOWN THE PAGE BELOW THIS WIDTH, AND THAT IS
+     NOT DECORATION. This page is eleven screens tall on a phone and eight
+     on a tablet. A header that scrolls away on a page that long is a header
+     that exists for the first screen only. It is left alone above 980px,
+     where the page is shorter and the links are always one scroll away. */
+  header.shell {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    padding-inline: 24px;
+    border-bottom: 1px solid var(--line);
+    background: #fff;
+  }
+  .nav { height: 66px; }
+  /* Anchored jumps must clear the sticky bar, or every link lands with its
+     own heading hidden behind the header. */
+  [id] { scroll-margin-top: 82px; }
+
+  /* ⚠️  A READABLE FLOOR. These sizes were set for a 1512px screen, where
+     9px of uppercase mono reads as a label. On a phone held at arm's length
+     it reads as a smudge, and 8px is not readable anywhere. Nothing here
+     changes the desktop. */
+  .section-label,
+  .audit-section-label,
+  .founder-label,
+  .window-top,
+  .gallery-bar,
+  .screen-note,
+  .audit-table thead th { font-size: 11px; letter-spacing: .13em; }
+  .window-top b { font-size: 12px; }
+  .checks { font-size: 12.5px; }
+  footer { font-size: 13px; }
+  .audit-count { font-size: 12px; }
+
+  /* ⚠️  TOUCH TARGETS. A link 18px tall is a mouse target, not a thumb one.
+     WCAG 2.2 asks for 24px and every platform guideline asks for more, so
+     these get a real box. Links that sit inside a sentence are deliberately
+     left alone: WCAG exempts them, and padding them out would break the
+     line they belong to. */
+  .footer-links { gap: 2px 20px; }
+  /* ⚠️  THE GAP IS LOAD BEARING. Making this a flex box for the sake of the
+     40px target turned "GetPolisha ↗" into "GetPolisha↗", because a flex
+     container collapses the whitespace between its children. This is the
+     second time that has bitten this file. */
+  .pstrip-links a { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+
+  /* Measure. The shell is as wide as the device here, so a paragraph that
+     is comfortable at 1180px in two columns becomes a 110 character line. */
+  .section-copy p, .hero-copy, .founder p, .pstrip-copy p, .case-copy p { max-width: 64ch; }
+
   .pstrip { grid-template-columns: 1fr; gap: 22px; }
   .hero { grid-template-columns: 1fr; min-height: auto; }
   .hero-copy { max-width: 690px; }
@@ -1226,14 +1375,26 @@ footer {
 }
 
 /* ============================= Mobile ================================= */
+/* ====================== Phones and small tablets ======================= */
+/* The inline links come out and the menu goes in. 760px rather than 700
+   because the five links plus the button were already touching the logo at
+   768, which is the commonest tablet width there is. */
+@media (max-width: 760px) {
+  .nav-links { display: none; }
+  .menu { display: block; }
+  header.shell { padding-inline: 14px; }
+  .nav { height: 60px; }
+  [id] { scroll-margin-top: 74px; }
+}
+
 @media (max-width: 700px) {
   .shell { width: min(100% - 28px, 1180px); }
-  .notice { font-size: 10px; }
-  .nav-links a:not(.nav-cta) { display: none; }
+  /* Was 10px. The only call to action above the header is in this line. */
+  .notice { font-size: 12px; padding: 9px 16px; }
 
   .hero { gap: 48px; padding: 65px 0 78px; }
   .hero-price { font-size: 13px; }
-  .hero-services { font-size: 10px; letter-spacing: .1em; }
+  .hero-services { font-size: 11px; letter-spacing: .09em; column-gap: 14px; }
   .hero-services i { margin: 0 5px; }
   .hero h1 { font-size: clamp(38px, 11vw, 56px); }
   .hero-copy { font-size: 16px; }
@@ -1270,9 +1431,12 @@ footer {
   .founder { grid-template-columns: 1fr; }
   .founder .button { grid-column: auto; justify-self: start; }
 
-  .checks { gap: 11px; }
-  .section-head { margin-bottom: 38px; }
-  section { padding: 66px 0; }
+  .checks { gap: 9px 16px; }
+  .section-head { margin-bottom: 32px; }
+  /* Bigger type costs vertical space, so the space between sections pays
+     some of it back. 58px still reads as a section break at this width. */
+  section { padding: 58px 0; }
+  .case { padding-top: 64px; }
 
   footer { flex-direction: column; align-items: flex-start; gap: 15px; }
 }

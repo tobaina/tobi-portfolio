@@ -175,6 +175,27 @@
       <a href="#pricing">Pricing</a>
       <a class="nav-cta" href="#contact" data-track="nav_contact">Get in touch</a>
     </div>
+
+    <!-- ⚠️  A PHONE USED TO HAVE NO NAVIGATION AT ALL.
+         Below 700px every link was display:none and only the blue button
+         survived, on a page that is eleven screens tall on a phone. A
+         visitor who wanted the price had to scroll for it and had no way
+         back. This is a <details> element rather than a scripted menu
+         because it opens, closes, takes focus and works with a keyboard
+         with no JavaScript at all: the script below only closes it after a
+         link is used, which is a convenience and not the mechanism. If the
+         script never runs, the menu still works. -->
+    <details class="menu">
+      <summary>Menu</summary>
+      <div class="menu-panel">
+        <a href="#problems">Problems we solve</a>
+        <a href="#how">How it works</a>
+        <a href="#work">Our work</a>
+        <a href="#products">Our products</a>
+        <a href="#pricing">Pricing</a>
+        <a class="menu-cta" href="#contact" data-track="menu_contact">Get in touch</a>
+      </div>
+    </details>
   </nav>
 </header>
 
