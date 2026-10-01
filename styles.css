@@ -105,7 +105,6 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
   border-radius: 4px;
 }
 .case :focus-visible,
-.offer :focus-visible,
 .contact-box :focus-visible { outline-color: #fff; }
 
 .skip-link {
@@ -230,18 +229,6 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
   align-items: center;
   min-height: 700px;
   padding: 86px 0;
-}
-.kicker {
-  margin: 0 0 23px;
-  color: #5c6674;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  /* Two even lines rather than a full line plus one orphaned word. Ignored by
-     browsers that do not support it, which wrap exactly as they did before. */
-  text-wrap: balance;
 }
 .hero h1 {
   max-width: 620px;
@@ -381,33 +368,15 @@ h1, h2, h3 { font-style: normal; }  /* no italics anywhere, by rule */
 .proof-tag strong { font-size: 12px; }
 .proof-tag span { color: var(--muted); }
 
-/* ------------------------------ Fact band ------------------------------ */
-.metrics {
-  display: grid;
-  grid-template-columns: 1.4fr repeat(3, 1fr);
-  border-bottom: 1px solid var(--line);
-}
-.metric { padding: 27px 30px; border-left: 1px solid var(--line); }
-.metric:first-child { border-left: 0; }
-.metric p { margin: 0; color: var(--body); font-size: 13px; }
-.metric b { display: block; font-size: 27px; letter-spacing: -.04em; }
-.metric span {
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 8px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
-
 /* ------------------------------ Sections ------------------------------- */
-section { padding: 110px 0; }
+section { padding: 88px 0; }
 
 .section-head {
   display: grid;
   grid-template-columns: 250px 1fr;
   gap: 55px;
   align-items: start;
-  margin-bottom: 54px;
+  margin-bottom: 42px;
 }
 .section-label {
   margin: 9px 0 0;
@@ -427,37 +396,6 @@ section { padding: 110px 0; }
   line-height: 1.04;
 }
 .section-copy p { max-width: 650px; margin: 0; color: var(--body); font-size: 17px; }
-
-/* ---------------------------- Decision path ---------------------------- */
-.decision-path {
-  display: grid;
-  grid-template-columns: 1fr 66px 1fr 66px 1fr;
-  align-items: stretch;
-}
-.path-card {
-  min-height: 260px;
-  padding: 29px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: #fff;
-}
-.path-icon {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  margin-bottom: 46px;
-  border-radius: 13px;
-  background: var(--blue-soft);
-  color: var(--blue);
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 600;
-}
-.path-card h3 { margin: 0 0 8px; font-size: 21px; }
-.path-card p { margin: 0; color: var(--body); font-size: 14px; }
-.path-arrow { display: grid; place-items: center; color: var(--blue); font-size: 22px; }
-.path-arrow::before { content: "\2192"; }
 
 /* ---------------------------- Selected work ---------------------------- */
 .case { background: var(--navy); color: #fff; }
@@ -614,268 +552,88 @@ section { padding: 110px 0; }
   line-height: 1.35;
 }
 .pcard .button { margin-top: auto; align-self: flex-start; }
-/* Sits on the dark case-study panel, so it takes the on-navy text colours. */
-.case-more {
-  margin: 34px 0 0;
-  padding-top: 22px;
-  border-top: 1px solid var(--navy-line);
-  color: var(--on-navy-soft);
-  font-size: 13.5px;
-  line-height: 1.62;
-}
-.case-more a {
-  color: var(--on-navy-blue);
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.case-more a:hover { text-decoration: underline; }
-
-.pcard-proves {
-  margin: 0 0 10px;
-  color: var(--blue);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.product-note { margin: 22px 0 0; color: var(--muted); font-size: 13px; }
-
-/* Plain guidance, not a highlighted box: it must not compete with the founding
-   note below it, and two tinted panels in a row stop either being read. */
-.price-notes {
-  display: grid;
-  gap: 16px;
-  margin-top: 26px;
-  padding-top: 24px;
-  border-top: 1px solid var(--line);
-}
-.price-note {
-  max-width: 74ch;
-  margin: 0;
-  color: var(--body);
-  font-size: 13.5px;
-  line-height: 1.65;
-}
-.price-note b { color: var(--ink); }
-
-/* ------------------------- Founding engagement ------------------------- */
-/* A note under the prices, not a second half of the section. */
-.founding {
-  max-width: 74ch;
-  margin: 22px 0 0;
-  padding: 18px 20px;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--blue);
-  border-radius: 0 var(--radius-m) var(--radius-m) 0;
-  background: var(--blue-soft);
-  color: var(--body);
-  font-size: 13.5px;
-  line-height: 1.62;
-}
-.founding b { color: var(--ink); }
-
-/* ---------------------------- What we build ---------------------------- */
-.services { background: var(--ice); }
-.service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.service {
-  min-height: 310px;
-  padding: 29px;
-  border: 1px solid #d9e2ef;
-  border-radius: var(--radius-l);
-  background: #fff;
-}
-.service-number { color: var(--blue); font-family: var(--mono); font-size: 9px; letter-spacing: .12em; }
-.service-graphic {
-  display: flex;
-  height: 92px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 28px 0;
-  padding: 14px;
-  border: 1px solid var(--line-2);
-  border-radius: 12px;
-  background: #f8fafc;
-}
-.service-graphic span {
-  padding: 8px 10px;
-  border: 1px solid #dce2eb;
-  border-radius: var(--radius-s);
-  background: #fff;
-  color: #4e5968;
-  font-size: 9px;
-}
-.service-graphic i { color: var(--blue); font-style: normal; }
-.service h3 { margin: 0 0 8px; font-size: 21px; }
-.service p { margin: 0; color: var(--body); font-size: 13px; }
-
-/* ── Other ways we can help ────────────────────────────────────────────────
-   Deliberately a different, lighter shape from the three cards above. If these
-   four were styled as equal cards the section would read as seven services of
-   equal weight, which is the "will do anything" look the three-card layout
-   exists to avoid. Plain text on the section background, no borders, no
-   numbers, no graphics. */
-.service-more { margin-top: 42px; padding-top: 30px; border-top: 1px solid var(--line); }
-.service-more-head {
-  margin: 0 0 20px;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-.service-minor-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.service-minor h4 { margin: 0 0 6px; color: var(--ink); font-size: 15px; font-weight: 600; }
-.service-minor p { margin: 0; color: var(--body); font-size: 13px; line-height: 1.6; }
-
-/* ── Who we help ──────────────────────────────────────────────────────────
-   Named trades, so a visitor scanning for themselves finds their own word.
-   Deliberately plain: it is a qualifier, not a seventh service. */
-.who { margin-top: 34px; padding-top: 28px; border-top: 1px solid var(--line); }
-.who-head {
-  margin: 0 0 12px;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-.who p { margin: 0; max-width: 82ch; color: var(--body); font-size: 14px; line-height: 1.7; }
-
-/* ── The free process check ───────────────────────────────────────────────
-   The main conversion on the page, and the only no-cost step on it, so it
-   sits directly under the hero rather than beside the paid rows. Tinted
-   background because it has to read as an offer, not as another explanatory
-   block in a page that already has several. */
-.check-offer {
-  padding: 62px 0;
-  background: var(--ice);
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-.check-steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
-  margin: 0 0 26px;
-  padding: 0;
-  list-style: none;
-}
-.check-step {
-  padding: 22px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-}
-.check-num {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  margin-bottom: 12px;
-  border-radius: 50%;
-  background: var(--blue);
-  color: #fff;
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 600;
-}
-.check-step p { margin: 0; color: var(--body); font-size: 14px; line-height: 1.65; }
-.check-note { max-width: 78ch; margin: 0 0 24px; color: var(--muted); font-size: 12.5px; line-height: 1.7; }
-.check-cta { margin: 0; }
-
-/* A word, not a number, so it must not inherit the tabular figures and the
-   weight the priced rows use. */
-.price-quoted { color: var(--muted); font-weight: 600; }
 .field-optional { color: var(--muted); font-weight: 400; }
 
-/* ------------------------------- Pricing ------------------------------- */
-.engagement { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+/* --------------------------- Problems we solve -------------------------
+   ⚠️  THIS REPLACED A "WHAT WE BUILD" SERVICE GRID, AND THAT IS THE POINT.
+   A service grid asks a visitor to already know whether they need a CRM, an
+   automation or a custom app. They do not. They know their spreadsheet is a
+   mess. Each tile is the sentence a buyer would say out loud; the answer
+   underneath is ours. Do not retitle these back into service names.
 
-/* Three groups instead of one numbered ladder. The old 01-04 counters implied
-   sequential stages every buyer walked through, which stopped being true the
-   moment website work and operations work became separate routes. The group
-   heading now carries the structure, so the counters are gone and the row is
-   two columns: what it is, and what it costs. */
-.price-group + .price-group { margin-top: 30px; }
-.price-group-head {
-  margin: 0 0 12px;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-.price-list { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-l); background: #fff; }
-/* The price pairs with the TITLE, not with the whole row, and the description
-   runs full width underneath. The obvious `1fr auto` grid looks right on a
-   desktop and collapses on a phone: the price is nowrap, so it keeps its width
-   and the description gets squeezed into a two-word-per-line ribbon. Pairing
-   the price with the title instead means the only thing competing for space is
-   a short heading, and the sentence always has the full row. */
-.price-row {
-  padding: 20px 26px;
-  border-bottom: 1px solid var(--line);
-}
-.price-row:last-child { border-bottom: 0; }
-.price-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px 18px;
-}
-.price-row h3 { margin: 0; font-size: 17px; }
-.price-row p {
-  max-width: 64ch;
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 12.5px;
-  line-height: 1.6;
-}
-.price-row p b { color: var(--body); font-weight: 600; }
-/* `tabular-nums` so the column of prices lines up digit for digit. */
-.price-row strong {
-  font-size: 16px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.offer {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 38px;
+   Every colour here was measured against the TINTED section background and
+   not against white: the cards are white on --ice, so card text is checked
+   on white and section copy on --ice. Lowest pair is 4.87:1.
+   ----------------------------------------------------------------------- */
+.problems { background: var(--ice); }
+.pain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.pain {
+  display: grid;
+  text-decoration: none;
+  gap: 9px;
+  align-content: start;
+  padding: 23px 25px;
+  border: 1px solid #d9e2ef;
   border-radius: var(--radius-l);
-  background: var(--navy);
-  color: #fff;
+  background: var(--white);
+  transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
 }
-.offer .section-label { margin: 0; color: #a6b8d4; }
-.offer h3 { max-width: 430px; margin: 20px 0 13px; font-size: 34px; letter-spacing: -.04em; line-height: 1.08; }
-.offer p { margin: 0; color: var(--on-navy-soft); font-size: 14px; }
-.offer-price {
+.pain:hover {
+  border-color: #b9ccea;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(17, 29, 53, .07);
+}
+.pain-said {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -.015em;
+  line-height: 1.32;
+}
+.pain-fix {
   display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 55px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, .13);
+  align-items: center;
+  gap: 7px;
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 600;
 }
-.offer-price b { font-size: 30px; }
-.offer-price span { color: var(--on-navy-soft); font-size: 11px; }
+.pain-fix .arrow { font-style: normal; transition: transform .18s ease; }
+.pain:hover .pain-fix .arrow { transform: translateX(3px); }
+
+/* ------------------------------ How it works ---------------------------
+   Step one IS the free process check. It used to be a section of its own,
+   114 words and most of a screen, which made the first step of the process
+   read as a separate product being sold. --------------------------------- */
+.flow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.flow-step {
+  padding: 25px 23px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: var(--white);
+}
+.flow-num {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  margin-bottom: 14px;
+  border-radius: 9px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+.flow-step h3 { margin: 0 0 6px; font-size: 17px; letter-spacing: -.02em; }
+.flow-step p { margin: 0; color: var(--body); font-size: 14px; line-height: 1.6; }
 
 /* ------------------------------- Founder ------------------------------- */
 .founder-section { padding-top: 0; }
@@ -907,7 +665,7 @@ section { padding: 110px 0; }
 .contact-box {
   position: relative;
   overflow: hidden;
-  padding: 70px;
+  padding: 58px;
   border-radius: 20px;
   background: var(--blue);
   color: #fff;
@@ -949,11 +707,6 @@ section { padding: 110px 0; }
   align-items: start;
 }
 .contact-copy h2 { margin-bottom: 18px; }
-
-.founder-note { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
-
-.contact-alt { margin-top: 20px; font-size: 13px; color: #e8f1ff; }
-.contact-alt a { font-weight: 600; }
 
 .form-card {
   padding: 30px;
@@ -1133,47 +886,25 @@ footer {
   text-transform: uppercase;
 }
 .hero-services i { margin: 0 7px; color: var(--blue); font-style: normal; }
+/* Keep each label whole: it used to break as "ERP STYLE / SYSTEMS". */
+.hero-services span { white-space: nowrap; }
 
 .hero-price b { color: var(--ink); }
 .hero-price a { color: var(--blue); font-weight: 600; }
 
-/* ---------------------------- Walkthrough -----------------------------
-   Revealed by main.js only when the video file actually exists. Until then
-   the section carries `hidden` and this styling never applies to anything. */
-.walkthrough { background: var(--ice); }
-.walkthrough-frame {
-  margin-top: 26px;
-  padding: 10px;
-  border-radius: var(--radius-l);
-  background: var(--navy);
-  border: 1px solid var(--navy-line);
-}
-.walkthrough-frame video {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-m);
-  background: #000;
-}
-
 /* ============================ Tablet ================================== */
 @media (max-width: 980px) {
-  .check-steps { grid-template-columns: 1fr; }
-  .check-offer { padding: 46px 0; }
   .hero { grid-template-columns: 1fr; min-height: auto; }
   .hero-copy { max-width: 690px; }
   .product { max-width: 760px; }
-  .metrics { grid-template-columns: 1fr 1fr; }
-  .metric:first-child { grid-column: 1 / -1; border-bottom: 1px solid var(--line); }
   .section-head { grid-template-columns: 1fr; gap: 13px; }
-  .case-grid, .engagement { grid-template-columns: 1fr; }
-  .service-grid { grid-template-columns: 1fr 1fr; }
-  .service-minor-grid { grid-template-columns: 1fr 1fr; gap: 22px; }
+  .case-grid { grid-template-columns: 1fr; }
   .product-grid { grid-template-columns: 1fr; }
   .ba { grid-template-columns: 1fr; gap: 12px; }
   .ba-arrow { height: 34px; }
   .ba-arrow::before { content: "\2193"; }
   .contact-grid { grid-template-columns: 1fr; gap: 34px; }
+  .flow { grid-template-columns: 1fr 1fr; }
   .founder { grid-template-columns: 1fr; }
   .founder .button { grid-column: auto; justify-self: start; }
 }
@@ -1188,8 +919,6 @@ footer {
   .hero-price { font-size: 13px; }
   .hero-services { font-size: 10px; letter-spacing: .1em; }
   .hero-services i { margin: 0 5px; }
-  .service-minor-grid { grid-template-columns: 1fr; gap: 20px; }
-  .service-more { margin-top: 32px; padding-top: 24px; }
   .hero h1 { font-size: clamp(38px, 11vw, 56px); }
   .hero-copy { font-size: 16px; }
 
@@ -1198,37 +927,21 @@ footer {
   .product-proof { grid-template-columns: 1fr 1fr; }
   .product-proof div:first-child { grid-column: 1 / -1; border-bottom: 1px solid var(--navy-line); }
 
-  .metrics { grid-template-columns: 1fr; }
-  .metric, .metric:first-child {
-    grid-column: auto;
-    border-top: 1px solid var(--line);
-    border-left: 0;
-    border-bottom: 0;
-  }
-
-  .decision-path { grid-template-columns: 1fr; }
-  .path-card { min-height: 0; }
-  .path-icon { margin-bottom: 24px; }
-  .path-arrow { height: 52px; }
-  .path-arrow::before { content: "\2193"; }
 
   .case { padding-top: 80px; }
   .tabs { grid-template-columns: 1fr 1fr; }
   .tab:nth-child(-n+2) { border-bottom: 1px solid var(--line-2); }
   .tab:nth-child(2n) { border-right: 0; }
 
-  .service-grid { grid-template-columns: 1fr; }
   .product-grid { grid-template-columns: 1fr; }
   .pcard-body { padding: 22px 20px 24px; }
   .ba { grid-template-columns: 1fr; gap: 12px; margin-bottom: 36px; }
   .ba-col { padding: 20px 18px; }
-  .founding { padding: 16px 16px; }
-  .service { min-height: 0; }
 
-  .price-row { grid-template-columns: 44px 1fr; }
-  .price-row strong { grid-column: 2; text-align: left; }
-  .offer, .contact-box { padding: 38px 25px; }
+  .contact-box { padding: 38px 25px; }
   .contact-grid { grid-template-columns: 1fr; gap: 30px; }
+  .pain-grid, .flow { grid-template-columns: 1fr; }
+  .pain { padding: 20px 21px; }
   .form-card { padding: 24px 20px; }
 
   .founder { grid-template-columns: 1fr; }
@@ -1236,7 +949,7 @@ footer {
 
   .checks { gap: 11px; }
   .section-head { margin-bottom: 38px; }
-  section { padding: 84px 0; }
+  section { padding: 66px 0; }
 
   footer { flex-direction: column; align-items: flex-start; gap: 15px; }
 }
@@ -1251,5 +964,5 @@ footer {
 /* ========================= Forced colours / print ===================== */
 @media (forced-colors: active) {
   .tab[aria-selected="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
-  .product, .path-card, .service, .price-list, .gallery { border: 1px solid CanvasText; }
+  .product, .pain, .flow-step, .gallery { border: 1px solid CanvasText; }
 }

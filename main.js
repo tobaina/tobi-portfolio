@@ -245,28 +245,21 @@
     });
   });
 
-  /* Each service card reports a click by its own heading. The cards are not
-     links, so this is measurement only and must never change what a click
-     does. Names only, exactly as above. */
-  Array.prototype.slice.call(document.querySelectorAll(".service, .service-minor")).forEach(function (card) {
-    card.addEventListener("click", function () {
-      var heading = card.querySelector("h3, h4");
-      if (heading) track("service_card_click", { card: heading.textContent.trim().slice(0, 40) });
-    });
-  });
-
-  /* Pricing reached, once per visit. A visitor who never sees the prices and
-     one who reads them and leaves are different problems, and without this
-     they look identical in the numbers. */
+  /* The problems grid reached, once per visit.
+     This used to watch the pricing section, which no longer exists: the only
+     price left is one line in the hero, which nearly every visitor sees, so
+     the same event would now fire for everyone and measure nothing. The grid
+     is the real fork in the funnel. Somebody who never scrolls to it and
+     somebody who reads it and leaves are different problems. */
   (function () {
-    var pricing = document.getElementById("pricing");
+    var pricing = document.getElementById("problems");
     if (!pricing || typeof IntersectionObserver !== "function") return;
     var seen = false;
     var observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!seen && entry.isIntersecting) {
           seen = true;
-          track("pricing_viewed");
+          track("problems_viewed");
           observer.disconnect();
         }
       });
