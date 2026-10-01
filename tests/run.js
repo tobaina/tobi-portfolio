@@ -745,17 +745,32 @@ function serve() {
        two person shop does not want. The credit against a build survives and
        is the quieter, more credible risk reversal.
 
-       The boundaries panel was the only place this site named artificial
-       intelligence, and naming it at all was judged to cost more than it
-       bought. If it ever returns, it can return without that term: "anything
-       that commits money", "complaints", "decisions about a person" are about
-       automation in general and never needed it. */
+       The boundaries panel went with it. It was the only place this site
+       named artificial intelligence, and the decision since has gone further
+       than the word: nothing may suggest a machine doing work a person would
+       otherwise do. "What should stay human" only parses if something
+       non-human is running the job, so that framing is out too, here and on
+       the audit.
+
+       "Automation" is NOT in scope and must not be stripped. It is the
+       service itself, it appears in their own strategy document, and removing
+       it would leave the business unable to describe what it sells. The line
+       is between automating a process, which we do and say, and implying a
+       machine exercises judgement, which we neither do nor say. */
     check('no guarantee is published',
       !/you pay nothing|hours a week of recoverable/i.test(o.cardText),
       o.cardText.slice(0, 200));
     check('the credit against a build is still the risk reversal',
       /credited in full/i.test(o.terms), o.terms);
     check('the boundaries panel is gone', !o.hasBoundaries);
+    /* The framing, not just the word. "Stay human" and "in the loop" both
+       imply something else is otherwise doing the work. */
+    check('nothing suggests a machine doing a person\'s job',
+      !/\bstay human\b|\bin the loop\b|\bassistant\b|\bintelligen/i.test(o.bodyText),
+      (o.bodyText.match(/.{40}(stay human|in the loop|assistant|intelligen).{40}/i) || [''])[0]);
+    /* ...while the service itself is still describable. */
+    check('we can still say what we actually do',
+      /automation/i.test(o.bodyText));
 
     /* ⚠️  THOSE TWO LETTERS APPEAR NOWHERE ON THIS SITE.
        Not as a claim, not as a limit, not in a caveat. This was relaxed once

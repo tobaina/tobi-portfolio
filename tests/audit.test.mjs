@@ -28,12 +28,12 @@ const FULL = {
   volume: 'v2', channels: ['email', 'phone', 'chat', 'form'], manual: 'all', minutes: 'm30',
   duplication: 'many', tracking: 'memory', chasing: 'three',
   reminders: ['appointments', 'payment', 'status'], misses: 'daily',
-  admin: 'a10plus', human: ['quoting', 'complaints'], priority: 'intake',
+  admin: 'a10plus', team: 't20', priority: 'intake',
 };
 const TINY = {
   volume: 'v0', channels: ['email'], manual: 'none', minutes: 'm5',
   duplication: 'never', tracking: 'system', chasing: 'none', reminders: [],
-  misses: 'never', admin: 'a2', human: ['quoting'], priority: 'reporting',
+  misses: 'never', admin: 'a2', team: 't1', priority: 'reporting',
 };
 
 // ------------------------------------------------------------- scoring ---
@@ -92,8 +92,15 @@ const TINY = {
   check('at most three opportunities are offered', r.opportunities.length <= 3);
   check('a zero-hour component is never offered as an opportunity',
     r.opportunities.every(o => o.hours > 0));
-  check('what stays human is echoed back from their own answer',
-    r.human.length === 2 && /Quoting/i.test(r.human[0]), r.human.join(' | '));
+  /* ⚠️  THE TWELFTH QUESTION USED TO ASK WHAT SHOULD "STAY HUMAN".
+     That framing only parses if something non-human is otherwise doing the
+     work, which is a claim this business has decided not to make. The slot
+     now asks head count, which is the biggest driver of what a build costs
+     and is useful on the lead without implying anything. */
+  check('the team size is carried through to the result',
+    /6 to 20/.test(r.team), JSON.stringify(r.team));
+  check('nothing in the result mentions staying human',
+    !/human/i.test(JSON.stringify(r)), JSON.stringify(r).slice(0, 160));
 }
 
 // ----------------------------------------------------------------- API ---

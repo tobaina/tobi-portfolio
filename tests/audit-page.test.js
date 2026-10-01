@@ -71,7 +71,8 @@ const srv=http.createServer((q,s)=>{let u=decodeURIComponent(q.url.split('?')[0]
   check('a number is shown', /^\d+(\.\d)?$/.test(hours), hours);
   check('the working is shown', (await pg.$$('#audit-parts tr')).length === 4);
   check('opportunities are ranked', (await pg.$$('#audit-opps li')).length > 0);
-  check('what stays human is echoed', (await pg.$$('#audit-human li')).length > 0);
+  check('nothing on the result suggests a machine doing a person\'s job',
+    !/stay human|in the loop|\bassistant\b/i.test(await pg.innerText('body')));
   check('a verdict is given', (await pg.innerText('#audit-verdict-head')).length > 10);
 
   // the capture
