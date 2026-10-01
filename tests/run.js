@@ -470,8 +470,20 @@ function serve() {
         heroPrice: text(price),
         priceInHero: !!price && !!heroText && heroText.contains(price),
         bodyText: document.body.innerText.replace(/\s+/g, ' '),
+        /* ⚠️  THE PRICE SWEEP DELIBERATELY EXCLUDES THE ENQUIRY FORM.
+           The budget dropdown offers CA$1,500 / CA$5,000 / CA$15,000, and
+           those are the VISITOR telling us their budget, not prices we
+           charge. Sweeping them would either fail honest copy or force them
+           onto the allowlist, where a real unapproved price could then hide
+           behind them. The guard is about what we publish as our price. */
+        pricedText: (() => {
+          const clone = document.body.cloneNode(true);
+          const form = clone.querySelector('#contact');
+          if (form) form.remove();
+          return clone.innerText.replace(/\s+/g, ' ');
+        })(),
         ld,
-        gone: ['pricing', 'services', 'process-check', 'walkthrough', 'hiring']
+        gone: ['services', 'process-check', 'walkthrough', 'hiring']
           .filter(id => !!document.getElementById(id)),
         tableBits: document.querySelectorAll('.price-row, .price-group-head, .price-list').length,
         mailtos: [...document.querySelectorAll('a[href^="mailto:"]')].map(a => a.getAttribute('href')),
@@ -485,6 +497,8 @@ function serve() {
         productsLead: text(document.querySelector('#products .section-copy p')),
         notice: text(document.querySelector('.notice')),
         noticeLinksToContact: !!document.querySelector('.notice a[href="#contact"]'),
+        hasPricing: !!document.getElementById('pricing'),
+        quoteBlocks: document.querySelectorAll('blockquote, .testimonial, .quote').length,
       };
     });
 
@@ -496,24 +510,46 @@ function serve() {
     check('it promises a written quote',
       /quoted in writing/i.test(r.heroPrice), r.heroPrice);
 
-    /* ⚠️  THE GUARD THAT MATTERS. Two figures on the whole page, both in
-       that one line. A third means the table is growing back. */
-    const amounts = r.bodyText.match(/CA\$[\d,]+/g) || [];
-    check('exactly two money figures exist on the page',
-      amounts.length === 2, amounts.join(' '));
-    check('both of them are the two floors',
-      amounts.every(a => /CA\$1,200|CA\$4,800/.test(a)), amounts.join(' '));
+    /* ⚠️  AN ALLOWLIST, NOT A COUNT, AND THAT CHANGE WAS DELIBERATE.
+       This used to assert that exactly two figures existed anywhere on the
+       page, which was right while the only prices were the two build floors
+       in the hero. The diagnostic and the three support tiers are prices we
+       chose to publish, so a bare count would now fail on purpose-built copy
+       and teach whoever hit it to delete the guard.
+       What still must not happen is a price appearing that nobody decided on,
+       which is how the old 391-word table grew back one row at a time. So the
+       set of amounts is pinned instead: add a price here only at the moment
+       you add it to the page AND to the offer catalogue in the structured
+       data, which the next assertion cross-checks. */
+    const ALLOWED_PRICES = ['CA$400', 'CA$1,200', 'CA$4,800', 'CA$120', 'CA$450'];
+    const amounts = r.pricedText.match(/CA\$[\d,]+/g) || [];
+    const unapproved = [...new Set(amounts)].filter(a => !ALLOWED_PRICES.includes(a));
+    check('every money figure on the page is one we decided on',
+      unapproved.length === 0, unapproved.join(' '));
+    check('the two build floors are still stated',
+      amounts.includes('CA$1,200') && amounts.includes('CA$4,800'), amounts.join(' '));
+    check('the diagnostic price is stated', amounts.includes('CA$400'), amounts.join(' '));
+    check('all three support tiers are priced',
+      ['CA$120', 'CA$450', 'CA$1,200'].every(a => amounts.includes(a)), amounts.join(' '));
 
     /* Structured data is a second copy of the same claim, and a stale second
        copy is what search engines surface. It must agree with the line. */
-    check('the offer catalogue agrees with the visible figures',
-      /"price": ?"1200"/.test(r.ld) && /"price": ?"4800"/.test(r.ld));
-    check('the offer catalogue publishes no third figure',
-      (r.ld.match(/"price":/g) || []).length === 2,
-      String((r.ld.match(/"price":/g) || []).length));
+    /* Structured data is a second copy of the same claim, and a stale second
+       copy is what a search engine surfaces. Each published price must appear
+       in the catalogue, and the catalogue must publish nothing extra. */
+    const ldPrices = (r.ld.match(/"price": ?"(\d+)"/g) || [])
+      .map(m => 'CA$' + Number(m.replace(/\D/g, '')).toLocaleString('en-CA'));
+    check('every visible price appears in the offer catalogue',
+      [...new Set(amounts)].every(a => ldPrices.includes(a)),
+      'visible ' + [...new Set(amounts)].join(' ') + ' | catalogue ' + ldPrices.join(' '));
+    check('the offer catalogue publishes no price the page does not show',
+      ldPrices.every(a => ALLOWED_PRICES.includes(a)), ldPrices.join(' '));
 
     // ---- what was removed stays removed
+    /* #pricing is NOT in that list any more. It came back deliberately, as
+       a two column section rather than the 391 word table it replaced. */
     check('the deleted sections are gone', r.gone.length === 0, r.gone.join(', '));
+    check('the pricing section is back', !!r.navLabels.length && r.hasPricing);
     check('no fragment of the pricing table survives',
       r.tableBits === 0, String(r.tableBits));
     /* A draft of this page replaced the working form with a mailto. On a
@@ -527,7 +563,9 @@ function serve() {
       r.navLabels.some(l => /problem/i.test(l)) && r.navLabels.some(l => /how it works/i.test(l)),
       r.navLabels.join(' | '));
     check('navigation no longer points at deleted sections',
-      !r.navLabels.some(l => /^(pricing|services)$/i.test(l)), r.navLabels.join(' | '));
+      !r.navLabels.some(l => /^services$/i.test(l)), r.navLabels.join(' | '));
+    check('navigation reaches the prices', r.navLabels.some(l => /^pricing$/i.test(l)),
+      r.navLabels.join(' | '));
 
     /* The hero carried two paragraphs saying the same thing, the second of
        them duplicating the services strip two lines below it. */
@@ -536,14 +574,34 @@ function serve() {
       /website/i.test(r.bodyText.slice(0, 900)), r.bodyText.slice(0, 160));
     check('hero names the service routes',
       /Websites/i.test(r.heroServices) && /Automation/i.test(r.heroServices), r.heroServices);
-    check('hero offers a contact route and a problems route',
-      r.actions.some(a => a.href === '#contact') && r.actions.some(a => a.href === '#problems'),
+    /* ⚠️  THE SECOND HERO BUTTON IS THE AUDIT NOW, ON PURPOSE.
+       It used to scroll to the problems grid, which asked a stranger to read.
+       The audit asks them a question about their own business instead and
+       answers it with a number, which is the only thing on this page a cold
+       visitor can get value from without talking to anybody. The problems
+       grid is still one scroll down and still in the navigation.
+       What must stay true: the hero offers the paid route and a free route,
+       and the free one does not require a conversation. */
+    check('the hero offers a way to talk to us', r.actions.some(a => a.href === '#contact'),
       JSON.stringify(r.actions));
+    check('the hero offers a free route that needs no conversation',
+      r.actions.some(a => a.href === '/audit'), JSON.stringify(r.actions));
+    check('the problems grid is still reachable from the navigation',
+      r.navLabels.some(l => /problem/i.test(l)), r.navLabels.join(' | '));
 
     // ---- claims that must never appear
     check('no hiring copy', !/we are hiring|join (our|the) team/i.test(r.bodyText));
-    check('no testimonial or client name is invented',
-      !/testimonial|trusted by|our clients include/i.test(r.bodyText));
+    /* ⚠️  THE WORD IS NOT THE PROBLEM, THE CLAIM IS.
+       This used to fail on the word "testimonial" anywhere, which now trips
+       on the founding offer, where we ask a first client FOR one in exchange
+       for included work. Asking for a testimonial we do not have is honest;
+       implying we already have them is not. So the check moved from the word
+       to the claim, and to the markup a quote would need. */
+    check('no social proof is claimed that we do not have',
+      !/trusted by|our clients include|clients say|customers love|rated \d/i.test(r.bodyText),
+      (r.bodyText.match(/trusted by|our clients include|clients say|customers love|rated \d/i) || [''])[0]);
+    check('no quote is presented as a client testimonial',
+      r.quoteBlocks === 0, String(r.quoteBlocks));
     check('implementation figures stay labelled as depth, not as the result',
       /behind the system/i.test(r.caseDepthLabel), r.caseDepthLabel);
 
@@ -627,6 +685,178 @@ function serve() {
     const picked = await page.evaluate(() => document.getElementById('cf-need').value);
     check('a tile preselects its option in the form',
       picked === 'website', 'select is "' + picked + '"');
+
+    await ctx.close();
+  }
+
+  // ----------------------------------------- the offer and its guarantee
+  /* =====================================================================
+     THE DIAGNOSTIC IS THE FIRST THING ANYBODY BUYS, AND IT WENT MISSING.
+     When the pricing table was cut, this went with it, which left the best
+     thing on the page being given away with nothing to buy afterwards. It
+     is asserted structurally so that cannot happen quietly again.
+
+     The guarantee is the part to protect. "If we do not find at least 5
+     hours a week of recoverable time, you pay nothing" is only honourable
+     because it names a number AND a definition. Soften it into adjectives
+     and it becomes an argument with a client instead of a promise.
+     ===================================================================== */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const o = await page.evaluate(() => {
+      const t = el => (el ? el.innerText.replace(/\s+/g, ' ').trim() : '');
+      const card = document.querySelector('.offer-card');
+      return {
+        present: !!document.getElementById('diagnostic'),
+        price: t(document.querySelector('.offer-head strong')),
+        deliverables: document.querySelectorAll('.offer-list li').length,
+        terms: t(document.querySelector('.offer-terms')),
+        guarantee: t(document.querySelector('.offer-guarantee')),
+        cta: !!document.querySelector('.offer-card a[data-need="diagnostic"]'),
+        freeRoute: t(document.querySelector('.offer-alt')),
+        cardText: t(card),
+        boundaries: t(document.querySelector('.boundaries')),
+        boundaryCount: document.querySelectorAll('.boundary-list li').length,
+        patterns: [...document.querySelectorAll('.pattern-list li')].map(li => t(li)),
+        bodyText: document.body.innerText.replace(/\s+/g, ' '),
+      };
+    });
+
+    check('the diagnostic section exists', o.present);
+    check('the diagnostic is priced', /CA\$400/.test(o.price), o.price);
+    check('it lists what the client actually receives',
+      o.deliverables === 6, String(o.deliverables));
+    check('it credits in full against a build',
+      /credited in full/i.test(o.terms) && /30 days/i.test(o.terms), o.terms);
+
+    check('the guarantee names a number of hours',
+      /5 hours a week/i.test(o.guarantee), o.guarantee);
+    check('the guarantee states the consequence plainly',
+      /you pay nothing/i.test(o.guarantee), o.guarantee);
+    /* Without this the guarantee is unfalsifiable and therefore arguable. */
+    check('the guarantee defines how an hour is evidenced',
+      /documented/i.test(o.guarantee) && /task/i.test(o.guarantee), o.guarantee);
+
+    check('the diagnostic has its own call to action', o.cta);
+    check('the free route is still offered beside it',
+      /free 30 minute process check/i.test(o.freeRoute), o.freeRoute);
+
+    /* The trust block. This is the one place "AI" is allowed on the page,
+       and only because it is naming a limit rather than making a claim. */
+    check('the boundaries block exists',
+      /what we will not automate/i.test(o.boundaries), o.boundaries.slice(0, 80));
+    check('it names four things we refuse to automate',
+      o.boundaryCount === 4, String(o.boundaryCount));
+    check('it promises the boundary is agreed in writing',
+      /in writing/i.test(o.boundaries), o.boundaries.slice(0, 200));
+    check('AI appears only as a limit, never as a boast',
+      /drafts and suggests/i.test(o.boundaries) && /approves anything that matters/i.test(o.boundaries),
+      o.boundaries.slice(-200));
+    /* ⚠️  "AI" WAS BANNED OUTRIGHT AND IS NOW ALLOWED IN EXACTLY ONE PLACE.
+       If the word appears anywhere else on the page it is being used as a
+       claim rather than a limit, which is the thing the ban was right about. */
+    const aiHits = (o.bodyText.match(/\bAI\b/g) || []).length;
+    const aiInBoundaries = (o.boundaries.match(/\bAI\b/g) || []).length;
+    check('AI is mentioned only inside the boundaries block',
+      aiHits > 0 && aiHits === aiInBoundaries,
+      'page ' + aiHits + ' | boundaries ' + aiInBoundaries);
+
+    /* Ten patterns, each of which is running in the system above. Nothing
+       goes in this list that is not already built. */
+    check('the reusable patterns are listed', o.patterns.length === 10,
+      String(o.patterns.length));
+    check('no pattern claims an industry we have not worked in',
+      !o.patterns.some(x => /healthcare|finance|legal|retail/i.test(x)),
+      o.patterns.join(' | '));
+
+    await ctx.close();
+  }
+
+  // --------------------------------------------- support tiers and terms
+  /* What a client buys in a retainer is being able to reach us, not a number
+     of hours, so a tier without a stated response time is a subscription to
+     nothing. Website care and system care are also DIFFERENT PRODUCTS: one
+     ladder for both was the original pricing mistake, because a website going
+     down costs a day of enquiries and a system going down stops a business.
+     These assertions exist to stop them being merged back together. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const t = await page.evaluate(() => {
+      const txt = el => (el ? el.innerText.replace(/\s+/g, ' ').trim() : '');
+      return {
+        present: !!document.getElementById('pricing'),
+        lines: [...document.querySelectorAll('.price-line')].map(l => ({
+          label: txt(l.querySelector('span')),
+          amount: txt(l.querySelector('strong')),
+        })),
+        founding: txt(document.querySelector('.founding')),
+        ownership: txt(document.querySelector('.price-note')),
+      };
+    });
+
+    check('the pricing section exists', t.present);
+
+    const monthly = t.lines.filter(l => /\/mo/.test(l.amount));
+    check('three support tiers are published', monthly.length === 3,
+      JSON.stringify(monthly.map(m => m.label.slice(0, 20))));
+    check('every support tier states a response time',
+      monthly.every(m => /working day|same day/i.test(m.amount)),
+      monthly.map(m => m.amount).join(' | '));
+    check('website care and system care are separate products',
+      monthly.some(m => /website care/i.test(m.label))
+        && monthly.some(m => /system care/i.test(m.label)),
+      monthly.map(m => m.label.slice(0, 20)).join(' | '));
+
+    check('the build terms promise ownership',
+      /own the code/i.test(t.ownership), t.ownership.slice(0, 160));
+
+    /* A trade, not a discount. A discount trains clients to expect discounts
+       and reads as low confidence in the price. */
+    check('the founding offer is a trade rather than a discount',
+      /case study/i.test(t.founding) && !/% off|discount/i.test(t.founding),
+      t.founding.slice(0, 200));
+    check('the founding offer states real capacity',
+      /two new builds a month/i.test(t.founding), t.founding.slice(0, 220));
+
+    await ctx.close();
+  }
+
+  // --------------------------------------------------- the budget field
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+
+    const b = await page.evaluate(() => {
+      const sel = document.getElementById('cf-budget');
+      const label = sel && document.querySelector('label[for="cf-budget"]');
+      return {
+        present: !!sel,
+        required: !!sel && sel.required,
+        labelled: !!label && label.textContent.trim().length > 0,
+        marksOptional: !!label && /optional/i.test(label.textContent),
+        defaultValue: sel ? sel.value : null,
+        options: sel ? [...sel.options].map(o => o.value).filter(Boolean) : [],
+        hasUnsure: sel ? [...sel.options].some(o => /not sure/i.test(o.textContent)) : false,
+      };
+    });
+
+    check('the enquiry offers a budget field', b.present);
+    check('the budget field has a real label', b.labelled);
+    /* Required here loses the people who genuinely do not know yet, who are
+       often exactly the ones a diagnostic helps most. */
+    check('the budget field is optional', b.present && !b.required);
+    check('it is marked optional to the reader', b.marksOptional);
+    check('it starts unanswered', b.defaultValue === '', String(b.defaultValue));
+    check('it offers a "not sure" answer', b.hasUnsure);
+    check('it offers a usable number of ranges',
+      b.options.length >= 4, String(b.options.length));
 
     await ctx.close();
   }
@@ -954,19 +1184,26 @@ function serve() {
         numbers: steps.map(st => (st.querySelector('.flow-num') || {}).textContent || ''),
         first: steps.length ? steps[0].innerText : '',
         last: steps.length ? steps[steps.length - 1].innerText : '',
+        all: steps.map(st => st.innerText).join(' ').replace(/\s+/g, ' '),
         ctas: [...document.querySelectorAll('[data-need="check"]')].length,
       };
     });
     check('the how it works section exists', chk.present);
-    check('it is a four step sequence', chk.steps === 4, 'got ' + chk.steps);
+    /* Five, not four. "Improve" is where the retainer lives, and leaving
+       it off made the process appear to end at handover, which is also where
+       our only recurring revenue would have ended. */
+    check('it is a five step sequence', chk.steps === 5, 'got ' + chk.steps);
     check('the steps are numbered in order',
-      chk.numbers.join('') === '1234', chk.numbers.join(','));
+      chk.numbers.join('') === '12345', chk.numbers.join(','));
     /* Step one IS the free check. It had a section to itself before, which
        made the first step of a process look like a separate product. */
     check('step one is the free process check',
       /free/i.test(chk.first) && /30 minute/i.test(chk.first), chk.first.slice(0, 120));
-    check('the last step promises ownership and handover',
-      /own/i.test(chk.last) && /handover/i.test(chk.last), chk.last.slice(0, 120));
+    check('ownership and handover are still promised in the flow',
+      /own/i.test(chk.all) && /handover/i.test(chk.all), chk.all.slice(0, 200));
+    check('the last step carries the work forward past handover',
+      /improv/i.test(chk.last) && /support|change work/i.test(chk.last),
+      chk.last.slice(0, 160));
     check('a call to action still offers the free check', chk.ctas >= 1, 'got ' + chk.ctas);
 
     /* Clicking the hero call to action must arrive at the form with the
