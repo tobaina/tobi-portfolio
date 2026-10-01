@@ -1374,6 +1374,40 @@ function serve() {
     }
   }
 
+  /* ------------------------------------------------------ The LinkedIn link
+     ⚠️  THIS LINK WAS A PERSONAL PROFILE FOR WEEKS. Every other trace of a
+     named individual was deliberately removed from this page, and this one
+     survived because it is a button rather than a sentence. It now points at
+     the company page, and these fail if it ever points back at a profile. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+    const li = await page.evaluate(() => {
+      const a = document.querySelector('a[data-track="linkedin"]');
+      const ld = [...document.querySelectorAll('script[type="application/ld+json"]')]
+        .map(s => s.textContent).join(' ');
+      return {
+        href: a ? a.getAttribute('href') : null,
+        text: a ? a.textContent.trim() : null,
+        newTab: a ? (a.target === '_blank' && /noopener/.test(a.rel)) : false,
+        profileLinksAnywhere: [...document.querySelectorAll('a[href]')]
+          .map(x => x.getAttribute('href'))
+          .filter(h => /linkedin\.com\/in\//i.test(h)),
+        sameAs: /linkedin\.com\/company\/polisha-systems/.test(ld),
+      };
+    });
+    check('the LinkedIn button points at the company page',
+      !!li.href && /linkedin\.com\/company\//i.test(li.href), String(li.href));
+    check('no link on the page reaches a personal LinkedIn profile',
+      li.profileLinksAnywhere.length === 0, li.profileLinksAnywhere.join(', '));
+    check('the button says follow, not connect, which is the verb for a person',
+      /follow/i.test(li.text || '') && !/connect/i.test(li.text || ''), String(li.text));
+    check('the LinkedIn button opens in a new tab safely', li.newTab, JSON.stringify(li));
+    check('the structured data claims the company page as ours', li.sameAs, String(li.sameAs));
+    await ctx.close();
+  }
+
   /* --------------------------------------------------------------- The menu
      A phone had no navigation at all: below 700px every link was hidden and
      only the button survived, on a page eleven screens tall. These assert
