@@ -523,42 +523,6 @@ section { padding: 88px 0; }
   text-transform: uppercase;
 }
 
-/* --------------------------- Other products ---------------------------- */
-.products { background: var(--ice); }
-.product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.pcard {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid #d9e2ef;
-  border-radius: var(--radius-l);
-  background: #fff;
-}
-.pcard-shot { display: block; border-bottom: 1px solid var(--line-2); background: #eef3fa; }
-/* Cropped shorter than the source on purpose: these prove the products
-   exist and are real screens, and nobody reads them at this size. The top of
-   each screen is the recognisable part, so the crop is anchored there. */
-.pcard-shot img { width: 100%; height: auto; aspect-ratio: 1120 / 470; object-fit: cover; object-position: top center; }
-.pcard-body { display: flex; flex: 1; flex-direction: column; padding: 26px 26px 28px; }
-.pcard-body h3 { margin: 0 0 9px; font-size: 22px; letter-spacing: -.02em; }
-.pcard-body > p { margin: 0 0 18px; color: var(--body); font-size: 14px; line-height: 1.62; }
-.pcard-list {
-  display: grid;
-  gap: 7px;
-  margin: 0 0 22px;
-  padding: 0;
-  list-style: none;
-  font-size: 13px;
-  color: var(--body);
-}
-.pcard-list li { display: grid; grid-template-columns: 16px 1fr; gap: 9px; align-items: start; }
-.pcard-list li::before {
-  content: "\2022";
-  color: var(--blue);
-  font-size: 15px;
-  line-height: 1.35;
-}
-.pcard .button { margin-top: auto; align-self: flex-start; }
 .field-optional { color: var(--muted); font-weight: 400; }
 
 /* --------------------------- Problems we solve -------------------------
@@ -772,6 +736,15 @@ section { padding: 88px 0; }
 .founder h2 { margin: 0 0 7px; font-size: 24px; letter-spacing: -.02em; line-height: 1.2; }
 .founder p { max-width: 720px; margin: 0; color: var(--body); font-size: 14px; }
 .founder p + p { margin-top: 13px; }
+/* The two product links are the whole of what a section used to say. They
+   are underlined rather than coloured alone, so the link is not carried by
+   colour for a reader who cannot separate it from the body ink. */
+.founder-products a {
+  color: var(--blue);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .founder-label {
   margin: 0 0 6px;
   color: var(--blue);
@@ -1206,7 +1179,6 @@ footer {
   .hero-copy { max-width: 690px; }
   .product { max-width: 760px; }
   .case-grid { grid-template-columns: 1fr; }
-  .product-grid { grid-template-columns: 1fr; }
   .ba { grid-template-columns: 1fr; gap: 12px; }
   .ba-arrow { height: 34px; }
   .ba-arrow::before { content: "\2193"; }
@@ -1242,8 +1214,6 @@ footer {
   .tab:nth-child(-n+2) { border-bottom: 1px solid var(--line-2); }
   .tab:nth-child(2n) { border-right: 0; }
 
-  .product-grid { grid-template-columns: 1fr; }
-  .pcard-body { padding: 22px 20px 24px; }
   .ba { grid-template-columns: 1fr; gap: 12px; margin-bottom: 36px; }
   .ba-col { padding: 20px 18px; }
 
