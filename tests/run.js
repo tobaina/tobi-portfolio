@@ -145,12 +145,27 @@ function serve() {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
     const page = await ctx.newPage();
     await page.goto(BASE, { waitUntil: 'networkidle' });
-    const links = await page.evaluate(() => [...document.querySelectorAll('.pcard a.button')].map(a => ({
+    /* The two products used to have a section of their own. It went, because
+       both are career products and the buyer here came for an operations
+       system. The LINKS did not go: they moved into one sentence in the team
+       block, and they are the only thing on the page that lets a visitor
+       check that we ship anything besides client work. Assert them where
+       they now live, and assert the section stays gone. */
+    const links = await page.evaluate(() => [...document.querySelectorAll('.founder-products a')].map(a => ({
       href: a.href, target: a.target, rel: a.rel, text: a.textContent.trim() })));
     check('two product links present', links.length === 2, 'found ' + links.length);
     check('Verdict link points at the live product', links.some(l => l.href === 'https://verdict.getpolisha.com/'), JSON.stringify(links.map(l => l.href)));
     check('GetPolisha link points at the live product', links.some(l => l.href === 'https://getpolisha.com/'));
     check('product links open in a new tab safely', links.every(l => l.target === '_blank' && /noopener/.test(l.rel)));
+    check('each product link is named, not a bare "here"',
+      links.every(l => /Verdict|GetPolisha/i.test(l.text)), JSON.stringify(links.map(l => l.text)));
+    const gone = await page.evaluate(() => ({
+      section: !!document.getElementById('products'),
+      cards: document.querySelectorAll('.pcard').length,
+      navLink: !!document.querySelector('a[href="#products"]'),
+    }));
+    check('the products section has not grown back', !gone.section && gone.cards === 0, JSON.stringify(gone));
+    check('nothing still links to the removed section', !gone.navLink, JSON.stringify(gone));
     await ctx.close();
   }
 
@@ -490,11 +505,13 @@ function serve() {
         navLabels: [...document.querySelectorAll('.nav-links a')].map(a => text(a)),
         heroCopyCount: document.querySelectorAll('.hero-copy').length,
         heroServices: text(document.querySelector('.hero-services')),
+        heroServicesText: (document.querySelector('.hero-services') || {}).textContent || '',
+        heroServicesTag: (document.querySelector('.hero-services') || {}).tagName || '',
+        heroServicesCount: document.querySelectorAll('.hero-services li').length,
         actions: [...document.querySelectorAll('.actions .button')]
           .map(a => ({ label: text(a), href: a.getAttribute('href') })),
         caseDepthLabel: text(document.querySelector('.case-depth span')),
-        productCount: document.querySelectorAll('.pcard').length,
-        productsLead: text(document.querySelector('#products .section-copy p')),
+        productsLine: text(document.querySelector('.founder-products')),
         notice: text(document.querySelector('.notice')),
         noticeLinksToContact: !!document.querySelector('.notice a[href="#contact"]'),
         hasPricing: !!document.getElementById('pricing'),
@@ -574,6 +591,20 @@ function serve() {
       /website/i.test(r.bodyText.slice(0, 900)), r.bodyText.slice(0, 160));
     check('hero names the service routes',
       /Websites/i.test(r.heroServices) && /Automation/i.test(r.heroServices), r.heroServices);
+    /* ⚠️  THE SERVICE LABELS MUST NOT RUN TOGETHER IN THE TEXT.
+       This line was briefly a flex row of spans. Flex collapses the whitespace
+       between its items, so the element's text content read literally as
+       "WebsitesCRMERP style systemsPortalsAutomation" — which is what a screen
+       reader announced and what landed on the clipboard, even though it looked
+       spaced on screen. It is a <ul> now, announced as a list with each item
+       read separately. A visual separator is not a substitute for one in the
+       text, so this checks the text, not the pixels. */
+    check('the service labels are separated in the text, not only on screen',
+      !/WebsitesCRM|systemsPortals|PortalsAutomation/i.test(r.heroServicesText),
+      r.heroServicesText);
+    check('the services are marked up as a list',
+      r.heroServicesTag === 'UL' && r.heroServicesCount === 5,
+      r.heroServicesTag + ' with ' + r.heroServicesCount);
     /* ⚠️  THE SECOND HERO BUTTON IS THE AUDIT NOW, ON PURPOSE.
        It used to scroll to the problems grid, which asked a stranger to read.
        The audit asks them a question about their own business instead and
@@ -606,9 +637,10 @@ function serve() {
       /behind the system/i.test(r.caseDepthLabel), r.caseDepthLabel);
 
     // ---- products are ours, and said to be
-    check('both products are still shown', r.productCount === 2, String(r.productCount));
-    check('the products are declared as ours and not as client work',
-      /not client work/i.test(r.productsLead), r.productsLead);
+    check('the products are still claimed as our own',
+      /products of our own/i.test(r.productsLine), r.productsLine);
+    check('the products line says we run them, not only that we built them',
+      /\brun\b/i.test(r.productsLine), r.productsLine);
 
     // ---- the announcement
     check('announcement invites a project', /taking on new projects/i.test(r.notice), r.notice);
