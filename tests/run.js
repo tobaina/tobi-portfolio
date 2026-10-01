@@ -112,7 +112,7 @@ function serve() {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
     const page = await ctx.newPage();
     await page.goto(BASE, { waitUntil: 'networkidle' });
-    for (const href of ['#work', '#products', '#services', '#pricing', '#contact']) {
+    for (const href of ['#problems', '#how', '#work', '#contact']) {
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.waitForTimeout(150);
       const want = await page.evaluate(h => {
@@ -132,8 +132,8 @@ function serve() {
       Element.prototype.scrollIntoView = function (o) { if (o && o.behavior === 'smooth') return; return real.call(this, o); };
       window.scrollTo(0, 0);
     });
-    const want = await page.evaluate(() => Math.round(document.getElementById('pricing').getBoundingClientRect().top + window.pageYOffset));
-    await page.click('.nav-links a[href="#pricing"]');
+    const want = await page.evaluate(() => Math.round(document.getElementById('problems').getBoundingClientRect().top + window.pageYOffset));
+    await page.click('.nav-links a[href="#problems"]');
     await page.waitForTimeout(1200);
     const got = Math.round(await page.evaluate(() => window.pageYOffset));
     check('nav still works when smooth scrolling is swallowed', Math.abs(got - want) < 90, 'wanted ' + want + ' got ' + got);
@@ -411,8 +411,8 @@ function serve() {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, reducedMotion: 'reduce' });
     const page = await ctx.newPage();
     await page.goto(BASE, { waitUntil: 'networkidle' });
-    const want = await page.evaluate(() => Math.round(document.getElementById('pricing').getBoundingClientRect().top + window.pageYOffset));
-    await page.click('.nav-links a[href="#pricing"]');
+    const want = await page.evaluate(() => Math.round(document.getElementById('problems').getBoundingClientRect().top + window.pageYOffset));
+    await page.click('.nav-links a[href="#problems"]');
     await page.waitForTimeout(900);
     check('reduced motion still navigates',
       Math.abs(Math.round(await page.evaluate(() => window.pageYOffset)) - want) < 90);
@@ -436,315 +436,197 @@ function serve() {
     await ctx.close();
   }
 
-  // -------------------------------------------- price, hiring, walkthrough
+  // ------------------------------------- the one price, and what replaced
+  /* =====================================================================
+     THE PRICING TABLE WAS DELETED ON PURPOSE. THE ONE LINE WAS NOT.
+
+     The table was 391 words and most of two screens, the single largest
+     block on a page whose real problem was that it ran for ten and a half
+     screens. Cutting it was right. Cutting EVERY number with it was not,
+     and that is what this block defends.
+
+     A floor does two jobs that nothing else on the page does: it filters
+     out an enquiry with three hundred dollars behind it, and it signals a
+     business rather than a freelancer. Delete the line and the cost does
+     not disappear, it moves onto the calendar, where every first call
+     opens with budget instead of with the problem.
+
+     So: exactly two figures, in the hero, and NOWHERE ELSE. The "no second
+     price" assertion is the important one. A table creeping back in one row
+     at a time is how this page got to ten screens the first time.
+     ===================================================================== */
   {
-    const ctx = await browser.newContext();
-    const page = await ctx.newPage();
-    await page.goto(BASE, { waitUntil: 'networkidle' });
-
-    const r = await page.evaluate(() => {
-      const w = document.getElementById('walkthrough');
-      const video = document.getElementById('walkthrough-video');
-      const hiring = document.getElementById('hiring');
-      const price = document.querySelector('.hero-price');
-      const heroBottom = (document.querySelector('.hero-text') || {}).getBoundingClientRect
-        ? document.querySelector('.hero-text').getBoundingClientRect().bottom : 0;
-      return {
-        // The walkthrough must be invisible AND inert until a file is named.
-        walkthroughPresent: !!w,
-        walkthroughHidden: !!w && w.hidden,
-        walkthroughDeclaresNoFile: !!w && !(w.getAttribute('data-video') || '').trim(),
-        walkthroughHasNoSource: !!video && video.querySelectorAll('source').length === 0,
-        walkthroughHasNoPoster: !!video && !video.getAttribute('poster'),
-        // The second audience is addressed, and can act on it.
-        hiringPresent: !!hiring,
-        mailtos: [...document.querySelectorAll('a[href^="mailto:"]')].map(a => a.getAttribute('href')),
-        // A price is visible without scrolling past the hero.
-        priceInHero: !!price && price.getBoundingClientRect().top < heroBottom + 1,
-        priceText: price ? price.textContent : '',
-      };
-    });
-
-    check('walkthrough section exists', r.walkthroughPresent);
-    check('walkthrough stays hidden while no file is named', r.walkthroughHidden && r.walkthroughDeclaresNoFile);
-    check('hidden walkthrough loads no media', r.walkthroughHasNoSource && r.walkthroughHasNoPoster);
-    /* The hiring section was removed when this became a company site: it
-       answered "are you available to hire", which is the wrong question on a
-       page selling builds, and it was the last thing speaking in one person's
-       voice. Asserted absent so it cannot drift back. */
-    check('the hiring section is gone', !r.hiringPresent);
-    check('no mailto anywhere on the page',
-      r.mailtos.length === 0, r.mailtos.join(' | '));
-    check('a price is shown in the hero', r.priceInHero);
-    check('the hero price names a real currency amount', /CA\$\s?\d/.test(r.priceText), r.priceText.slice(0, 80));
-    await ctx.close();
-  }
-
-  // --------------------------------------------- two routes through the page
-  /* The page has one job that the old copy quietly failed: a visitor who wants
-     a website has to be able to recognise themselves. These assertions are the
-     ones that break if someone later edits the page back into an
-     operations-only pitch without meaning to. */
-  {
-    const ctx = await browser.newContext();
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const page = await ctx.newPage();
     await page.goto(BASE, { waitUntil: 'networkidle' });
 
     const r = await page.evaluate(() => {
       const text = el => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
-      const priceRows = [...document.querySelectorAll('.price-row')].map(row => ({
-        title: text(row.querySelector('h3')),
-        amount: text(row.querySelector('strong')),
-        detail: text(row.querySelector('p')),
-      }));
-      const priceGroups = [...document.querySelectorAll('.price-group-head')].map(h => text(h));
+      const price = document.querySelector('.hero-price');
+      const heroText = document.querySelector('.hero-text');
+      const ld = [...document.querySelectorAll('script[type="application/ld+json"]')]
+        .map(n => n.textContent).join(' ');
       return {
-        notice: text(document.querySelector('.notice')),
-        noticeLinksToContact: !!document.querySelector('.notice a[href="#contact"]'),
+        heroPrice: text(price),
+        priceInHero: !!price && !!heroText && heroText.contains(price),
+        bodyText: document.body.innerText.replace(/\s+/g, ' '),
+        ld,
+        gone: ['pricing', 'services', 'process-check', 'walkthrough', 'hiring']
+          .filter(id => !!document.getElementById(id)),
+        tableBits: document.querySelectorAll('.price-row, .price-group-head, .price-list').length,
+        mailtos: [...document.querySelectorAll('a[href^="mailto:"]')].map(a => a.getAttribute('href')),
         navLabels: [...document.querySelectorAll('.nav-links a')].map(a => text(a)),
-        heroCopy: text(document.querySelector('.hero-copy')),
+        heroCopyCount: document.querySelectorAll('.hero-copy').length,
         heroServices: text(document.querySelector('.hero-services')),
         actions: [...document.querySelectorAll('.actions .button')]
           .map(a => ({ label: text(a), href: a.getAttribute('href') })),
-        caseMoreHref: (document.querySelector('.case-more a') || {}).getAttribute
-          ? document.querySelector('.case-more a').getAttribute('href') : null,
         caseDepthLabel: text(document.querySelector('.case-depth span')),
-        provesCount: document.querySelectorAll('.pcard-proves').length,
         productCount: document.querySelectorAll('.pcard').length,
-        getpolishaCard: text([...document.querySelectorAll('.pcard')]
-          .find(c => /GetPolisha/.test(text(c.querySelector('h3')))) || null),
-        minorServices: [...document.querySelectorAll('.service-minor h4')].map(h => text(h)),
-        priceRows,
-        priceGroups,
-        heroPrice: text(document.querySelector('.hero-price')),
-        priceNotes: [...document.querySelectorAll('.price-note')].map(n => text(n)).join(' '),
-        founding: text(document.querySelector('.founding')),
-        bodyText: document.body.innerText.replace(/\s+/g, ' '),
+        productsLead: text(document.querySelector('#products .section-copy p')),
+        notice: text(document.querySelector('.notice')),
+        noticeLinksToContact: !!document.querySelector('.notice a[href="#contact"]'),
       };
     });
 
-    // The announcement must invite both kinds of work and must not date itself.
+    // ---- the line itself
+    check('a price is still on the page', !!r.heroPrice, r.heroPrice);
+    check('the price sits in the hero, not below a scroll', r.priceInHero);
+    check('it names the website floor', /CA\$1,200/.test(r.heroPrice), r.heroPrice);
+    check('it names the systems floor', /CA\$4,800/.test(r.heroPrice), r.heroPrice);
+    check('it promises a written quote',
+      /quoted in writing/i.test(r.heroPrice), r.heroPrice);
+
+    /* ⚠️  THE GUARD THAT MATTERS. Two figures on the whole page, both in
+       that one line. A third means the table is growing back. */
+    const amounts = r.bodyText.match(/CA\$[\d,]+/g) || [];
+    check('exactly two money figures exist on the page',
+      amounts.length === 2, amounts.join(' '));
+    check('both of them are the two floors',
+      amounts.every(a => /CA\$1,200|CA\$4,800/.test(a)), amounts.join(' '));
+
+    /* Structured data is a second copy of the same claim, and a stale second
+       copy is what search engines surface. It must agree with the line. */
+    check('the offer catalogue agrees with the visible figures',
+      /"price": ?"1200"/.test(r.ld) && /"price": ?"4800"/.test(r.ld));
+    check('the offer catalogue publishes no third figure',
+      (r.ld.match(/"price":/g) || []).length === 2,
+      String((r.ld.match(/"price":/g) || []).length));
+
+    // ---- what was removed stays removed
+    check('the deleted sections are gone', r.gone.length === 0, r.gone.join(', '));
+    check('no fragment of the pricing table survives',
+      r.tableBits === 0, String(r.tableBits));
+    /* A draft of this page replaced the working form with a mailto. On a
+       phone a mailto often does nothing at all, and the address it used had
+       never been chosen. The form is the only contact route. */
+    check('no mailto replaces the contact form',
+      r.mailtos.length === 0, r.mailtos.join(' '));
+
+    // ---- the structure that replaced it
+    check('navigation offers problems and how it works',
+      r.navLabels.some(l => /problem/i.test(l)) && r.navLabels.some(l => /how it works/i.test(l)),
+      r.navLabels.join(' | '));
+    check('navigation no longer points at deleted sections',
+      !r.navLabels.some(l => /^(pricing|services)$/i.test(l)), r.navLabels.join(' | '));
+
+    /* The hero carried two paragraphs saying the same thing, the second of
+       them duplicating the services strip two lines below it. */
+    check('the hero says it once', r.heroCopyCount === 1, String(r.heroCopyCount));
+    check('hero copy still offers website work',
+      /website/i.test(r.bodyText.slice(0, 900)), r.bodyText.slice(0, 160));
+    check('hero names the service routes',
+      /Websites/i.test(r.heroServices) && /Automation/i.test(r.heroServices), r.heroServices);
+    check('hero offers a contact route and a problems route',
+      r.actions.some(a => a.href === '#contact') && r.actions.some(a => a.href === '#problems'),
+      JSON.stringify(r.actions));
+
+    // ---- claims that must never appear
+    check('no hiring copy', !/we are hiring|join (our|the) team/i.test(r.bodyText));
+    check('no testimonial or client name is invented',
+      !/testimonial|trusted by|our clients include/i.test(r.bodyText));
+    check('implementation figures stay labelled as depth, not as the result',
+      /behind the system/i.test(r.caseDepthLabel), r.caseDepthLabel);
+
+    // ---- products are ours, and said to be
+    check('both products are still shown', r.productCount === 2, String(r.productCount));
+    check('the products are declared as ours and not as client work',
+      /not client work/i.test(r.productsLead), r.productsLead);
+
+    // ---- the announcement
     check('announcement invites a project', /taking on new projects/i.test(r.notice), r.notice);
     check('announcement carries no expiring date',
       !/this quarter|this month|this year/i.test(r.notice), r.notice);
     check('announcement links to the contact form', r.noticeLinksToContact);
 
-    check('navigation says Services', r.navLabels.includes('Services'), r.navLabels.join(' | '));
+    await ctx.close();
+  }
 
-    // The hero must speak to a website buyer as well as an operations buyer.
-    check('hero copy offers website work', /website|online presence/i.test(r.heroCopy), r.heroCopy.slice(0, 120));
-    check('hero names the service routes',
-      /Websites/i.test(r.heroServices) && /Automation/i.test(r.heroServices), r.heroServices);
-    check('hero offers a contact and a work route',
-      r.actions.some(a => a.href === '#contact') && r.actions.some(a => a.href === '#work'),
-      JSON.stringify(r.actions));
+  // ------------------------------------------------ problems we solve grid
+  /* =====================================================================
+     This grid replaced a "what we build" service list, and the difference
+     is the entire positioning of the page. A service list asks a visitor to
+     already know whether they need a CRM, an automation or a custom app.
+     They do not. They know their spreadsheet is a mess.
 
-    // Engineering depth is kept, but it is no longer the first thing said.
-    check('implementation figures are labelled as depth, not as the result',
-      /behind the system/i.test(r.caseDepthLabel), r.caseDepthLabel);
-    check('the case study offers a route to smaller work', r.caseMoreHref === '#services');
+     Each tile therefore has two halves that must both survive: the sentence
+     the BUYER would say, in their words and in quotation marks, and the
+     answer in ours. A tile that loses its quote has been quietly turned
+     back into a service card.
+     ===================================================================== */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE, { waitUntil: 'networkidle' });
 
-    // Each live product says what it proves.
-    check('every product card says what it proves',
-      r.productCount > 0 && r.provesCount === r.productCount,
-      r.provesCount + ' of ' + r.productCount);
+    const g = await page.evaluate(() => {
+      const opts = [...document.querySelectorAll('#cf-need option')].map(o => o.value);
+      return {
+        present: !!document.getElementById('problems'),
+        tiles: [...document.querySelectorAll('.pain')].map(t => ({
+          said: (t.querySelector('.pain-said') || {}).textContent || '',
+          fix: (t.querySelector('.pain-fix') || {}).textContent || '',
+          href: t.getAttribute('href'),
+          need: t.getAttribute('data-need'),
+          track: t.getAttribute('data-track'),
+        })),
+        needOptions: opts,
+      };
+    });
 
-    /* ⚠️  ACCURACY, NOT COPY. getpolisha.com tells its own customers that a
-       person completes every rewrite. The portfolio must not imply the
-       rewriting is automated, whatever else it claims about the workflow. */
-    check('the GetPolisha card does not claim an automated rewrite',
-      !/automated (profile )?(rewrit|writing)/i.test(r.getpolishaCard), r.getpolishaCard.slice(0, 200));
-    check('the GetPolisha card says a person does the rewriting',
-      /by a person/i.test(r.getpolishaCard), r.getpolishaCard.slice(0, 200));
+    check('the problems section exists', g.present);
+    check('it offers six problems', g.tiles.length === 6, 'got ' + g.tiles.length);
+    check('every tile quotes the buyer',
+      g.tiles.every(t => /^\s*[“"]/.test(t.said) && /[”"]\s*$/.test(t.said)),
+      (g.tiles.find(t => !/^\s*[“"]/.test(t.said)) || {}).said || '');
+    check('every tile answers in our voice',
+      g.tiles.every(t => /^\s*We\b/.test(t.fix)),
+      (g.tiles.find(t => !/^\s*We\b/.test(t.fix)) || {}).fix || '');
+    check('every tile routes to the form',
+      g.tiles.every(t => t.href === '#contact'),
+      g.tiles.map(t => t.href).join(' '));
+    /* The point of data-need is that the enquiry arrives already classified.
+       A value the dropdown does not have silently does nothing. */
+    check('every tile carries a need the dropdown actually offers',
+      g.tiles.every(t => g.needOptions.includes(t.need)),
+      g.tiles.map(t => t.need).filter(n => !g.needOptions.includes(n)).join(' '));
+    check('every tile is measurable',
+      g.tiles.every(t => /^pain_/.test(t.track || '')),
+      g.tiles.map(t => t.track).join(' '));
 
-    // The wider offer exists, and stays secondary.
-    check('secondary services are listed', r.minorServices.length === 4, r.minorServices.join(' | '));
-    check('secondary services include website work',
-      r.minorServices.some(t => /website/i.test(t)), r.minorServices.join(' | '));
+    /* Both routes must be represented. A draft of this page dropped websites
+       from the grid entirely while still selling them in the hero. */
+    const said = g.tiles.map(t => t.said).join(' ');
+    check('the website route appears among the problems',
+      /website/i.test(said), said.slice(0, 200));
+    check('the operations route appears among the problems',
+      /spreadsheet|by hand|schedule/i.test(said), said.slice(0, 200));
 
-    /* ── PRICING ──────────────────────────────────────────────────────────
-       Three groups, and small website work carries a real number. A quote
-       cycle costs the same on a CA$1,800 job as on a CA$18,000 one, so on
-       small work "contact me for a quote" is a tax on both sides. These
-       assertions exist because the most likely future regression is somebody
-       quietly replacing a number with "get in touch". */
-    /* ⚠️  THE HERO AND THE TABLE MUST AGREE, AND THIS IS CHECKED BY DERIVATION.
-       This assertion used to hardcode one figure, so it passed while the hero
-       and the table drifted apart around it, and then failed on the honest
-       edit that moved the price. Every CA$ figure the hero names must appear
-       in the table below. Nothing to update when a price changes; it only
-       fails when the two genuinely disagree, which is the bug that once had
-       this page quoting three different build prices at the same time. */
-    /* ⚠️  TRIM TRAILING PUNCTUATION. `CA\$[\d,]+` is greedy over commas, so
-       "from CA$4,800, always quoted" yielded "CA$4,800," and matched nothing
-       in the table. The check then failed on a page whose prices agreed
-       perfectly, which is the kind of false alarm that gets a suite ignored. */
-    const heroFigures = (r.heroPrice.match(/CA\$[\d,]+/g) || []).map(f => f.replace(/,+$/, ''));
-    const tableAmounts = r.priceRows.map(x => x.amount).join(' ');
-    check('the hero names at least one price', heroFigures.length > 0, r.heroPrice.slice(0, 80));
-    const orphaned = heroFigures.filter(f => !tableAmounts.includes(f));
-    check('every price the hero names also appears in the table',
-      orphaned.length === 0,
-      'hero has ' + orphaned.join(', ') + ' | table has ' + tableAmounts);
-
-    check('pricing is grouped rather than one ladder', r.priceGroups.length === 3,
-      r.priceGroups.join(' | '));
-    check('a website group exists', r.priceGroups.some(g => /website/i.test(g)),
-      r.priceGroups.join(' | '));
-    /* ⚠️  THE GROUP HEADING MUST MATCH THE ROWS UNDER IT AND THE HERO.
-           This group was headed "Operations systems" while the row inside it
-           and the hero sentence both said "Business systems", so a reader
-           comparing the hero price to the table was matching two different
-           words for one thing. The heading follows the rows now. */
-    check('a business systems group exists', r.priceGroups.some(g => /business systems/i.test(g)),
-      r.priceGroups.join(' | '));
-    check('an after-launch group exists', r.priceGroups.some(g => /after launch/i.test(g)),
-      r.priceGroups.join(' | '));
-
-    const priced = (t) => r.priceRows.find(x => new RegExp(t, 'i').test(x.title));
-    const landing = priced('landing page');
-    const site = priced('business site');
-    const custom = priced('custom functionality');
-    const diagnostic = priced('diagnostic');
-    const build = priced('business systems');
-    const full = priced('larger systems');
-    const care = priced('care plan');
-    const change = priced('change work');
-
-    /* One row deliberately carries no figure: the largest engagement is
-       quoted after a check or a diagnostic, because publishing a ceiling was
-       sending small owners away before they reached the free process check.
-       Every OTHER row must still name a number, or "quoted" spreads. */
-    const unpriced = r.priceRows.filter(x => !/CA\$\s?\d/.test(x.amount));
-    check('every priced row but one names an amount',
-      r.priceRows.length >= 8 && unpriced.length === 1,
-      r.priceRows.map(x => x.title + '=' + x.amount).join(' | '));
-    check('the unpriced row is the largest engagement',
-      unpriced.length === 1 && /larger systems/i.test(unpriced[0].title),
-      unpriced.map(x => x.title).join(' | '));
-
-    // Small website work must stay a stated number, never a quote cycle.
-    /* Anchored to the Canadian freelance band (roughly CA$599-2,995 one-time
-       for a small-business site), not to agency pricing. These exact figures
-       are pinned so a later edit has to be deliberate. */
-    check('a landing page carries a fixed price',
-      !!landing && /^CA\$1,200$/.test(landing.amount), landing ? landing.amount : 'missing');
-    check('a business site carries a fixed price',
-      !!site && /^CA\$2,900$/.test(site.amount), site ? site.amount : 'missing');
-    check('custom functionality is a floor, not a fixed price',
-      !!custom && /^from CA\$5,500$/.test(custom.amount), custom ? custom.amount : 'missing');
-    check('no website row hides behind a quote cycle',
-      ![landing, site, custom].some(x => x && /quote|scope|contact|enquir/i.test(x.amount)));
-
-    check('the diagnostic is CA$400', !!diagnostic && /^CA\$400$/.test(diagnostic.amount),
-      diagnostic ? diagnostic.amount : 'missing');
-    // The diagnostic must read as credit, not as a toll gate.
-    check('the diagnostic is credited against the build',
-      !!diagnostic && /credited in full/i.test(diagnostic.detail), diagnostic ? diagnostic.detail : '');
-    /* A reachable first phase AND a ceiling, rather than one wide range that
-       asked a stranger to commit to the top of it. Both must exist: dropping
-       the ceiling caps the business, dropping the first phase puts the entry
-       price out of reach of the people most likely to say yes first. */
-    check('business systems start at CA$4,800',
-      !!build && /^from CA\$4,800$/.test(build.amount), build ? build.amount : 'missing');
-    check('larger systems are quoted rather than priced',
-      !!full && !/\d/.test(full.amount), full ? full.amount : 'missing');
-    check('both system rows are present', !!build && !!full, 'both rows must be present');
-    // "Fixed scope in writing" told a buyer nothing about what arrives.
-    check('the build says what is actually delivered',
-      !!build && /handover/i.test(build.detail) && /production/i.test(build.detail),
-      build ? build.detail : '');
-
-    /* ⚠️  DURATIONS ARE MEASURED, NOT MARKETING. These assertions exist
-       because this row once promised a first-phase system build "in about
-       two weeks" at a CA$3,500 floor -- a speed never achieved on any real
-       project (AIDRR six weeks, GetPolisha four, Verdict four, this site
-       two) and a floor of roughly CA$175/day across four actual weeks. A
-       quoted duration is a promise to a buyer, so shortening one to sound
-       competitive has to fail here rather than ship. If a future edit really
-       does make the work faster, change the measured record in the comment
-       above the row first, then these numbers. */
-    check('business systems quote four weeks, not two',
-      !!build && /four weeks/i.test(build.detail) && !/two weeks/i.test(build.detail),
-      build ? build.detail : 'missing');
-    check('larger systems are quoted at six weeks and up',
-      !!full && /six weeks/i.test(full.detail), full ? full.detail : 'missing');
-    check('the priced system row says a quote follows a check or a diagnostic',
-      !!build && /quoted in writing/i.test(build.detail), build ? build.detail : 'missing');
-    check('every website row states how long it takes',
-      [landing, site, custom].every(x => x && /week/i.test(x.detail)),
-      [landing, site, custom].map(x => x ? x.title + ': ' + x.detail : 'missing').join(' | '));
-
-    /* The ladder has to stay monotonic in BOTH price and time, or the page
-       argues against itself: a buyer who reads "four weeks" beside a floor
-       lower than the shorter job's floor concludes one of the two numbers is
-       untrue, and they are right. */
-    /* Parse every CA$ figure in a cell, so a range like "CA$4,800-7,500"
-       yields [4800, 7500] rather than the 48007500 that stripping non-digits
-       from the whole string would produce -- a bug that made this comparison
-       pass for the wrong reason no matter what the prices were. */
-    const figures = (t) => (String(t).match(/[\d][\d,]*/g) || [])
-      .map((n) => parseInt(n.replace(/,/g, ''), 10));
-    const floorOf = (row) => (row ? figures(row.amount)[0] : NaN);
-    const ceilingOf = (row) => {
-      const f = row ? figures(row.amount) : [];
-      return f.length ? f[f.length - 1] : NaN;
-    };
-    check('price parsing reads a range as two figures',
-      JSON.stringify(figures('CA$4,800\u20137,500')) === '[4800,7500]',
-      JSON.stringify(figures('CA$4,800\u20137,500')));
-    check('the system floor sits above the fixed-price website work',
-      floorOf(build) > ceilingOf(site),
-      (build ? build.amount : '?') + ' vs ' + (site ? site.amount : '?'));
-
-    // The retainer is split, because one blended number set the wrong
-    // expectation in both directions.
-    check('hosting and change work are priced separately',
-      !!care && !!change && care.amount !== change.amount,
-      (care ? care.amount : '?') + ' / ' + (change ? change.amount : '?'));
-    check('the care plan is CA$120/mo', !!care && /CA\$120\/mo/.test(care.amount),
-      care ? care.amount : 'missing');
-
-    /* Every superseded number, anywhere on the page. Each of these was live at
-       some point, and each contradicted something else while it was. */
-    for (const stale of ['CA\\$2,500', 'CA\\$1,800', 'CA\\$4,500', 'CA\\$6,000', 'CA\\$500.900', 'CA\\$250/mo', 'CA\\$900/mo',
-                         'CA\\$3,500', 'CA\\$6,500', 'CA\\$9,000',
-                         'CA\\$12,000', 'CA\\$4,800.7,500', 'CA\\$6,000.12,000']) {
-      check('no superseded price survives: ' + stale.replace(/\\\\/g, ''),
-        !new RegExp(stale).test(r.bodyText));
-    }
-
-    check('pricing explains that the diagnostic is optional',
-      /do not need the diagnostic/i.test(r.priceNotes), r.priceNotes.slice(0, 120));
-    /* Terms on the page, not in an awkward email after the buyer has decided. */
-    check('payment terms are stated before the first call',
-      /half to book|40%/i.test(r.priceNotes), r.priceNotes.slice(0, 260));
-    check('scope changes are quoted before they are built',
-      /quoted before it is built/i.test(r.priceNotes), r.priceNotes.slice(0, 400));
-
-    /* ⚠️  THE LAUNCH OFFER IS A PERCENTAGE, AND THAT IS THE POINT.
-       Every earlier version named a figure, and a named figure sits somewhere
-       relative to the published prices. Twice it landed below a floor on the
-       same page, which drags the anchor down permanently, and it had to be
-       re-picked by hand whenever any price moved -- which is how the page
-       ended up quoting three different build prices at once. A percentage is
-       correct against every row for ever and cannot contradict one. */
-    check('the launch offer is bounded by a count',
-      /first two/i.test(r.founding), r.founding.slice(0, 160));
-    /* ⚠️  THE RULE IS "NO FIXED FIGURE", NOT "MUST BE A PERCENTAGE". This
-       used to require a % sign, which quietly made one legitimate offer
-       unshippable: "first two system builds free" names no figure either, and
-       so cannot drift out of step with a price row, which is the entire
-       reason the original rule existed. A percentage and a free offer both
-       pass; "CA$1,000 off" does not, because that is the one that has to be
-       re-picked by hand every time any row moves. */
-    check('the launch offer names no fixed amount',
-      !/CA\$/.test(r.founding) && (/%/.test(r.founding) || /\bfree\b/i.test(r.founding)),
-      r.founding.slice(0, 200));
-    check('the launch offer says what it buys',
-      /case study/i.test(r.founding), r.founding.slice(0, 200));
-    check('the launch offer is not conditional on a testimonial',
-      !/testimonial|review/i.test(r.founding), r.founding.slice(0, 220));
+    /* Clicking a tile must land on the form with that option chosen. */
+    await page.click('.pain[data-need="website"]');
+    await page.waitForTimeout(350);
+    const picked = await page.evaluate(() => document.getElementById('cf-need').value);
+    check('a tile preselects its option in the form',
+      picked === 'website', 'select is "' + picked + '"');
 
     await ctx.close();
   }
@@ -811,8 +693,19 @@ function serve() {
     check('the routing field is optional', r.present && !r.required);
     check('the routing field starts unanswered', r.defaultValue === '', String(r.defaultValue));
     check('the routing field offers a "not sure" answer', r.hasUnsure);
+    /* ⚠️  THIS ASSERTS THE PROPERTY, NOT A PHRASE.
+       It used to match the literal string "build or improve", which pinned
+       the wording rather than the requirement and failed the moment the
+       heading was rewritten to something that still did the job. The
+       requirement is that a website buyer and an operations buyer can both
+       see themselves in it: one route that invites something to be made,
+       one that invites a problem. The old heading, "What is your team still
+       doing manually?", offered only the second, and a visitor who simply
+       wanted a website had no answer to it and no reason to write. */
     check('the contact heading welcomes both kinds of work',
-      /build or improve/i.test(r.heading), r.heading);
+      /\b(build|website|make)\b/i.test(r.heading)
+        && /\b(slow|improve|time|problem|manual|difficult)\w*\b/i.test(r.heading),
+      r.heading);
     check('the message box asks for now-and-next, not only what is broken',
       /what you have now/i.test(r.messageLabel), r.messageLabel);
 
@@ -991,13 +884,28 @@ function serve() {
     await page.goto(BASE, { waitUntil: 'networkidle' });
 
     const NEWSLETTER = 'Send me occasional notes on operations systems';
+
+    /* ⚠️  THE SECOND EXCEPTION: THE CUSTOMER'S OWN WORDS.
+       The problems grid quotes a buyer saying "My team keeps doing the same
+       work by hand." That is the reader speaking about themselves, exactly
+       like the newsletter checkbox, and it is the whole reason the grid
+       works. It is NOT the company slipping into the first person.
+       Stripped STRUCTURALLY, by element, not by regex, so prose can never
+       hide inside the exception, and every stripped item is separately
+       required to be wrapped in quotation marks. */
     const copy = await page.evaluate((exception) => {
+      const quotes = [...document.querySelectorAll('.pain-said')].map(e => e.innerText.trim());
       const text = document.body.innerText.replace(/\s+/g, ' ');
-      return { full: text, stripped: text.split(exception).join(' ') };
+      let stripped = text.split(exception).join(' ');
+      quotes.forEach(q => { stripped = stripped.split(q.replace(/\s+/g, ' ')).join(' '); });
+      return { full: text, stripped, quotes };
     }, NEWSLETTER);
 
     check('the newsletter exception is still on the page',
       copy.full.includes(NEWSLETTER));
+    check('every customer quote is actually quoted',
+      copy.quotes.length > 0 && copy.quotes.every(q => /^[\u201c"]/.test(q) && /[\u201d"]$/.test(q)),
+      copy.quotes.find(q => !/^[\u201c"]/.test(q)) || '');
 
     const voice = [
       [/\bI\b/, 'first person "I"'],
@@ -1038,22 +946,28 @@ function serve() {
     await page.goto(BASE, { waitUntil: 'networkidle' });
 
     const chk = await page.evaluate(() => {
-      const sec = document.getElementById('process-check');
+      const sec = document.getElementById('how');
+      const steps = sec ? [...sec.querySelectorAll('.flow-step')] : [];
       return {
         present: !!sec,
-        steps: sec ? sec.querySelectorAll('.check-step').length : 0,
-        numbers: sec ? [...sec.querySelectorAll('.check-num')].map(n => n.textContent.trim()) : [],
-        note: sec ? (sec.querySelector('.check-note') || {}).innerText || '' : '',
+        steps: steps.length,
+        numbers: steps.map(st => (st.querySelector('.flow-num') || {}).textContent || ''),
+        first: steps.length ? steps[0].innerText : '',
+        last: steps.length ? steps[steps.length - 1].innerText : '',
         ctas: [...document.querySelectorAll('[data-need="check"]')].length,
       };
     });
-    check('the free process check section exists', chk.present);
-    check('it is a three step sequence', chk.steps === 3, 'got ' + chk.steps);
+    check('the how it works section exists', chk.present);
+    check('it is a four step sequence', chk.steps === 4, 'got ' + chk.steps);
     check('the steps are numbered in order',
-      chk.numbers.join('') === '123', chk.numbers.join(','));
-    check('it separates the free check from the paid diagnostic',
-      /diagnostic/i.test(chk.note) && /free process check/i.test(chk.note), chk.note);
-    check('more than one call to action offers the free check', chk.ctas >= 2, 'got ' + chk.ctas);
+      chk.numbers.join('') === '1234', chk.numbers.join(','));
+    /* Step one IS the free check. It had a section to itself before, which
+       made the first step of a process look like a separate product. */
+    check('step one is the free process check',
+      /free/i.test(chk.first) && /30 minute/i.test(chk.first), chk.first.slice(0, 120));
+    check('the last step promises ownership and handover',
+      /own/i.test(chk.last) && /handover/i.test(chk.last), chk.last.slice(0, 120));
+    check('a call to action still offers the free check', chk.ctas >= 1, 'got ' + chk.ctas);
 
     /* Clicking the hero call to action must arrive at the form with the
        option already chosen. Without this the visitor is asked, immediately
