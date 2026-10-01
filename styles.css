@@ -1056,10 +1056,16 @@ footer {
    Gaps alone were tried and rejected: visually the labels ran together, and
    the flex container collapsed the whitespace between them so the text content
    itself read as one word. */
+/* The gap and the tracking are both tuned, not picked: at the full 1180px
+   shell this row needs 480px of a 499px column, so all five labels hold one
+   line. At 22px/.13em it needed 519px and orphaned "Automation" onto a line
+   of its own. Below roughly 1230px the shell narrows and it wraps again,
+   which is fine: every item carries its own mark, so a wrapped line still
+   reads as part of the list rather than as a stray fragment. */
 .hero-services {
   display: flex;
   flex-wrap: wrap;
-  column-gap: 22px;
+  column-gap: 16px;
   row-gap: 9px;
   margin: 20px 0 0;
   padding: 0;
@@ -1068,7 +1074,7 @@ footer {
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: .13em;
+  letter-spacing: .1em;
   text-transform: uppercase;
 }
 .hero-services li {
