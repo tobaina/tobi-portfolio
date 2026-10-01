@@ -736,15 +736,6 @@ section { padding: 88px 0; }
 .founder h2 { margin: 0 0 7px; font-size: 24px; letter-spacing: -.02em; line-height: 1.2; }
 .founder p { max-width: 720px; margin: 0; color: var(--body); font-size: 14px; }
 .founder p + p { margin-top: 13px; }
-/* The two product links are the whole of what a section used to say. They
-   are underlined rather than coloured alone, so the link is not carried by
-   colour for a reader who cannot separate it from the body ink. */
-.founder-products a {
-  color: var(--blue);
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
 .founder-label {
   margin: 0 0 6px;
   color: var(--blue);
@@ -753,6 +744,49 @@ section { padding: 88px 0; }
   font-weight: 600;
   letter-spacing: .12em;
   text-transform: uppercase;
+}
+
+/* ---------------------------- Proof strip ------------------------------
+   Deliberately not a card grid. Two cards with screenshots stood here and
+   cost about 1,100px; this says the same thing in roughly a sixth of that.
+   The links are underlined as well as coloured, so the link is not carried
+   by colour alone for a reader who cannot separate blue from the body ink. */
+.proof { padding-top: 0; }
+.pstrip {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 40px;
+  align-items: center;
+  padding: 26px 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: #fff;
+}
+.pstrip-copy p:last-child { max-width: 420px; margin: 0; color: var(--body); font-size: 14px; line-height: 1.62; }
+/* Side by side, not stacked. Stacked, the two links sat in a narrow column
+   pinned to the right edge and left roughly 450px of nothing across the
+   middle of the strip, which is the same dead space this page has already
+   been cleared of once. */
+.pstrip-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 40px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pstrip-links li { display: grid; gap: 2px; align-content: start; }
+.pstrip-links a {
+  color: var(--blue);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.pstrip-links span {
+  color: var(--muted);
+  font-size: 12.5px;
 }
 
 /* ------------------------------- Contact ------------------------------- */
@@ -1175,6 +1209,7 @@ footer {
 
 /* ============================ Tablet ================================== */
 @media (max-width: 980px) {
+  .pstrip { grid-template-columns: 1fr; gap: 22px; }
   .hero { grid-template-columns: 1fr; min-height: auto; }
   .hero-copy { max-width: 690px; }
   .product { max-width: 760px; }
