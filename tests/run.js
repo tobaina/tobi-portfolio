@@ -547,17 +547,20 @@ function serve() {
         notice: text(document.querySelector('.notice')),
         noticeLinksToContact: !!document.querySelector('.notice a[href="#contact"]'),
         hasPricing: !!document.getElementById('pricing'),
+        diagnosticText: text(document.getElementById('diagnostic')),
         quoteBlocks: document.querySelectorAll('blockquote, .testimonial, .quote').length,
       };
     });
 
-    // ---- the line itself
-    check('a price is still on the page', !!r.heroPrice, r.heroPrice);
-    check('the price sits in the hero, not below a scroll', r.priceInHero);
-    check('it names the website floor', /CA\$1,200/.test(r.heroPrice), r.heroPrice);
-    check('it names the systems floor', /CA\$4,800/.test(r.heroPrice), r.heroPrice);
-    check('it promises a written quote',
-      /quoted in writing/i.test(r.heroPrice), r.heroPrice);
+    /* ⚠️  THE HERO CARRIES NO PRICE, AND THIS ASSERTION IS INVERTED ON
+       PURPOSE. A line naming both build floors used to sit under the call to
+       action, and the argument for it was that a floor filters out an enquiry
+       with a few hundred dollars behind it. That job is now done in the
+       pricing section, where a visitor goes when they want a number. Pricing
+       lives in one place, so the hero can make the argument instead of
+       opening the negotiation. Do not reintroduce it here. */
+    check('the hero no longer opens with a price', !r.heroPrice, r.heroPrice);
+    check('prices still exist, in the pricing section', r.hasPricing);
 
     /* ⚠️  AN ALLOWLIST, NOT A COUNT, AND THAT CHANGE WAS DELIBERATE.
        This used to assert that exactly two figures existed anywhere on the
@@ -577,7 +580,17 @@ function serve() {
       unapproved.length === 0, unapproved.join(' '));
     check('the two build floors are still stated',
       amounts.includes('CA$1,200') && amounts.includes('CA$4,800'), amounts.join(' '));
-    check('the diagnostic price is stated', amounts.includes('CA$400'), amounts.join(' '));
+    /* ⚠️  CA$400 IS NOW AN ANCHOR, NOT A PRICE. The diagnostic is free while
+       we take on our first clients. Naming what it normally costs is what
+       stops "free" reading as a sales call, so the figure must stay AND the
+       word free must stay. Remove either and the offer loses its meaning. */
+    check('the diagnostic still names what it normally costs',
+      amounts.includes('CA$400'), amounts.join(' '));
+    check('the diagnostic is offered free',
+      /free/i.test(r.diagnosticText) && /normally/i.test(r.diagnosticText),
+      r.diagnosticText.slice(0, 200));
+    check('the reason it is free is stated, not just the price',
+      /first clients/i.test(r.diagnosticText), r.diagnosticText.slice(0, 200));
     check('all three support tiers are priced',
       ['CA$120', 'CA$450', 'CA$1,200'].every(a => amounts.includes(a)), amounts.join(' '));
 
@@ -588,11 +601,21 @@ function serve() {
        in the catalogue, and the catalogue must publish nothing extra. */
     const ldPrices = (r.ld.match(/"price": ?"(\d+)"/g) || [])
       .map(m => 'CA$' + Number(m.replace(/\D/g, '')).toLocaleString('en-CA'));
+    /* ⚠️  THE DIAGNOSTIC IS THE ONE OFFER WHOSE TWO FIGURES DIFFER ON
+       PURPOSE. Its price in the catalogue is 0, because that is what it
+       actually costs right now, while the page shows CA$400 as the anchor for
+       what it normally costs. Both are true and neither should be changed to
+       match the other, so it is excluded from the cross-check and asserted on
+       its own below. Every other price must still agree in both directions. */
+    const vis = [...new Set(amounts)].filter(a => a !== 'CA$400');
+    const cat = ldPrices.filter(a => a !== 'CA$0');
     check('every visible price appears in the offer catalogue',
-      [...new Set(amounts)].every(a => ldPrices.includes(a)),
-      'visible ' + [...new Set(amounts)].join(' ') + ' | catalogue ' + ldPrices.join(' '));
+      vis.every(a => cat.includes(a)),
+      'visible ' + vis.join(' ') + ' | catalogue ' + cat.join(' '));
     check('the offer catalogue publishes no price the page does not show',
-      ldPrices.every(a => ALLOWED_PRICES.includes(a)), ldPrices.join(' '));
+      cat.every(a => ALLOWED_PRICES.includes(a)), cat.join(' '));
+    check('the catalogue publishes the diagnostic as free',
+      ldPrices.includes('CA$0'), ldPrices.join(' '));
 
     // ---- what was removed stays removed
     /* #pricing is NOT in that list any more. It came back deliberately, as
@@ -810,11 +833,28 @@ function serve() {
     });
 
     check('the diagnostic section exists', o.present);
-    check('the diagnostic is priced', /CA\$400/.test(o.price), o.price);
+    /* ⚠️  INVERTED. This required a price of CA$400 in the heading. The
+       diagnostic is free while we take on our first clients, so the heading
+       must say so. The CA$400 did not disappear, it moved into the terms line
+       underneath as the anchor, and the assertion for that is in the pricing
+       block above. */
+    check('the diagnostic heading says it is free', /free/i.test(o.price), o.price);
+    check('no price sits in the diagnostic heading any more',
+      !/CA\$/.test(o.price), o.price);
     check('it lists what the client actually receives',
       o.deliverables === 6, String(o.deliverables));
-    check('it credits in full against a build',
-      /credited in full/i.test(o.terms) && /30 days/i.test(o.terms), o.terms);
+    /* ⚠️  ALSO INVERTED, AND FOR A REASON THAT IS EASY TO MISS. The terms
+       line used to promise the CA$400 was credited in full against a build
+       started within 30 days. That was the risk reversal while the diagnostic
+       was paid. Nothing is at risk in a free session, so crediting it would
+       be meaningless, and a promise that means nothing is worse than none.
+       What replaces it is the reason it is free, which is what keeps it from
+       reading as a sales call. */
+    check('the credit promise is gone, because there is nothing to credit',
+      !/credited in full/i.test(o.terms), o.terms);
+    check('the terms say what it normally costs and why it is free now',
+      /normally/i.test(o.terms) && /CA\$400/.test(o.terms) && /first clients/i.test(o.terms),
+      o.terms);
 
     /* ⚠️  THE GUARANTEE AND THE BOUNDARIES BLOCK WERE BOTH REMOVED, ON PURPOSE.
 
@@ -845,8 +885,8 @@ function serve() {
     check('no guarantee is published',
       !/you pay nothing|hours a week of recoverable/i.test(o.cardText),
       o.cardText.slice(0, 200));
-    check('the credit against a build is still the risk reversal',
-      /credited in full/i.test(o.terms), o.terms);
+    check('scarcity is stated honestly rather than as urgency',
+      /two a month/i.test(o.terms), o.terms);
     check('the boundaries panel is gone', !o.hasBoundaries);
     /* The framing, not just the word. "Stay human" and "in the loop" both
        imply something else is otherwise doing the work. */
@@ -1270,9 +1310,12 @@ function serve() {
     await ctx.close();
   }
 
-  /* ============================================ the free process check ===
-     The only no-cost step on the page and the main conversion, so it is
-     asserted structurally rather than left to the eye. */
+  /* =========================================== the free first step ======
+     The main conversion, so it is asserted structurally rather than left to
+     the eye. There were two free human first steps for a while, a 30 minute
+     process check and, later, a diagnostic that stopped being paid. Two free
+     versions of the same conversation is one too many, so they collapsed into
+     the diagnostic and these assertions follow it. */
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const page = await ctx.newPage();
@@ -1288,7 +1331,8 @@ function serve() {
         first: steps.length ? steps[0].innerText : '',
         last: steps.length ? steps[steps.length - 1].innerText : '',
         all: steps.map(st => st.innerText).join(' ').replace(/\s+/g, ' '),
-        ctas: [...document.querySelectorAll('[data-need="check"]')].length,
+        ctas: [...document.querySelectorAll('[data-need="diagnostic"]')].length,
+        staleCheckCtas: [...document.querySelectorAll('[data-need="check"]')].length,
       };
     });
     check('the how it works section exists', chk.present);
@@ -1298,25 +1342,37 @@ function serve() {
     check('it is a five step sequence', chk.steps === 5, 'got ' + chk.steps);
     check('the steps are numbered in order',
       chk.numbers.join('') === '12345', chk.numbers.join(','));
-    /* Step one IS the free check. It had a section to itself before, which
-       made the first step of a process look like a separate product. */
-    check('step one is the free process check',
-      /free/i.test(chk.first) && /30 minute/i.test(chk.first), chk.first.slice(0, 120));
+    /* Step one IS the free diagnostic. It had a section to itself before,
+       which made the first step of a process look like a separate product. */
+    check('step one is the free diagnostic',
+      /free/i.test(chk.first) && /diagnostic/i.test(chk.first), chk.first.slice(0, 120));
     check('ownership and handover are still promised in the flow',
       /own/i.test(chk.all) && /handover/i.test(chk.all), chk.all.slice(0, 200));
     check('the last step carries the work forward past handover',
       /improv/i.test(chk.last) && /support|change work/i.test(chk.last),
       chk.last.slice(0, 160));
-    check('a call to action still offers the free check', chk.ctas >= 1, 'got ' + chk.ctas);
+    check('a call to action still offers the free diagnostic', chk.ctas >= 1, 'got ' + chk.ctas);
+    /* ⚠️  A data-need POINTING AT AN OPTION THAT NO LONGER EXISTS SILENTLY
+       DOES NOTHING. That has already happened once on this page. The "check"
+       option was removed from the form, so any link still asking for it would
+       land the visitor on an unselected dropdown with no error anywhere. */
+    check('nothing still asks the form for the removed option',
+      chk.staleCheckCtas === 0, 'got ' + chk.staleCheckCtas);
 
     /* Clicking the hero call to action must arrive at the form with the
        option already chosen. Without this the visitor is asked, immediately
        after saying what they want, to say it again. */
-    await page.click('[data-need="check"]');
+    await page.click('[data-need="diagnostic"]');
     await page.waitForTimeout(300);
     const selected = await page.evaluate(() => document.getElementById('cf-need').value);
-    check('the call to action preselects the free process check',
-      selected === 'check', 'select is "' + selected + '"');
+    check('the call to action preselects the diagnostic',
+      selected === 'diagnostic', 'select is "' + selected + '"');
+    const opts = await page.evaluate(() =>
+      [...document.querySelectorAll('#cf-need option')].map(o => o.value));
+    check('every data-need on the page matches a real option',
+      [...new Set(await page.evaluate(() =>
+        [...document.querySelectorAll('[data-need]')].map(e => e.dataset.need)))]
+        .every(n => opts.includes(n)), JSON.stringify(opts));
     await ctx.close();
   }
 
