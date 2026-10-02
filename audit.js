@@ -168,10 +168,8 @@
     var acts = el("audit-verdict-actions");
     acts.innerHTML = "";
     if (r.verdict.cta === "diagnostic") {
-      acts.appendChild(link("/#diagnostic", "Book the diagnostic", "primary", "audit_to_diagnostic"));
+      acts.appendChild(link("/#diagnostic", "Book the free diagnostic", "primary", "audit_to_diagnostic"));
       acts.appendChild(link("/#contact", "Or just tell us about it", "secondary", "audit_to_contact"));
-    } else if (r.verdict.cta === "check") {
-      acts.appendChild(link("/#contact", "Book the free process check", "primary", "audit_to_check"));
     }
 
     quiz.hidden = true;

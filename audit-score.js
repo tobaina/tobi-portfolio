@@ -327,8 +327,14 @@
         key: "worthATalk",
         headline: "There is something here, but it is one problem rather than a system.",
         body: "That is usually worth a short conversation and a small fix rather than a build. " +
-          "The free process check covers exactly this.",
-        cta: "check",
+          "The diagnostic covers exactly this, and it costs nothing.",
+        /* ⚠️  BOTH VERDICTS POINT AT THE SAME FREE DIAGNOSTIC NOW.
+           There used to be two human first steps, a free process check and a
+           paid diagnostic, and this verdict sent people to the cheaper one.
+           The diagnostic is free while we take on our first clients, so the
+           two collapsed into one and sending anyone to a second, lesser
+           offer would just be a worse version of the same conversation. */
+        cta: "diagnostic",
       };
     } else {
       verdict = {
