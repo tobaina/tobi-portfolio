@@ -315,7 +315,7 @@ function serve() {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
     const page = await ctx.newPage();
     await page.route('**/api/contact', r => r.fulfill({ status: 503, contentType: 'application/json',
-      body: '{"ok":false,"error":"The form is not available right now. Please reach us through the LinkedIn link on this page."}' }));
+      body: '{"ok":false,"error":"The form is not available right now. Please email us at hello@getpolisha.com and we will pick it up from there."}' }));
     await page.goto(BASE, { waitUntil: 'networkidle' });
     const typed = 'This message must survive a failure.';
     await page.fill('#cf-name', 'Test'); await page.fill('#cf-email', 'a@b.co'); await page.fill('#cf-message', typed);
@@ -326,12 +326,19 @@ function serve() {
       cls: document.getElementById('cf-status').className,
       kept: document.getElementById('cf-message').value === t,
     }), typed);
-    /* ⚠️  NO ADDRESS, ON PURPOSE. This used to require the personal inbox
-       in the failure message, which republished it to every visitor who hit a
-       broken form. The page shows no address at all now, so the requirement
-       is that a failure still routes the visitor somewhere real. */
-    check('failure still routes the visitor somewhere real',
-      /linkedin/i.test(bad.status) && !/@/.test(bad.status), bad.status);
+    /* ⚠️  AN ADDRESS IS REQUIRED AGAIN, AND A PERSONAL ONE IS STILL FORBIDDEN.
+       This assertion has now been written three ways, which is the whole
+       history of the problem. It first required the personal inbox, which
+       republished a private address to every visitor who hit a broken form.
+       It was then inverted to forbid any address at all, and pointed the
+       visitor at the LinkedIn link instead, which was always the weaker
+       answer because a company page cannot be messaged by the public. There
+       is now a business mailbox, so the rule is finally the right one: name
+       it, and never name a personal one. */
+    check('failure routes the visitor to the business address',
+      /hello@getpolisha\.com/i.test(bad.status), bad.status);
+    check('failure never republishes a personal address',
+      !/gmail|tobaina/i.test(bad.status), bad.status);
     check('failure is styled as an error', /bad/.test(bad.cls));
     check('failure never loses what the visitor typed', bad.kept);
 
@@ -1231,6 +1238,7 @@ function serve() {
       [/Cambridge|Kitchener|Waterloo/i, 'a location limit'],
       [/\bhiring\b/i, 'the hiring pitch'],
       [/tobaina@gmail/i, 'a personal address'],
+      [/@gmail\.com/i, 'any personal mail provider'],
       [/no-code/i, '"no-code"'],
       [/generic developer/i, '"generic developer"'],
       [/[\u2013\u2014]/, 'an en or em dash'],
