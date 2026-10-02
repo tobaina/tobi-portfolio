@@ -534,6 +534,8 @@ function serve() {
         mailtos: [...document.querySelectorAll('a[href^="mailto:"]')].map(a => a.getAttribute('href')),
         navLabels: [...document.querySelectorAll('.nav-links a')].map(a => text(a)),
         heroCopyCount: document.querySelectorAll('.hero-copy').length,
+        heroCopy: text(document.querySelector('.hero-copy')),
+        heroServicesFirst: (document.querySelector('.hero-services li') || {}).textContent || '',
         heroServices: text(document.querySelector('.hero-services')),
         heroServicesText: (document.querySelector('.hero-services') || {}).textContent || '',
         heroServicesTag: (document.querySelector('.hero-services') || {}).tagName || '',
@@ -617,6 +619,23 @@ function serve() {
     /* The hero carried two paragraphs saying the same thing, the second of
        them duplicating the services strip two lines below it. */
     check('the hero says it once', r.heroCopyCount === 1, String(r.heroCopyCount));
+
+    /* ⚠️  THE HERO MUST NOT LEAD WITH WEBSITES. This is positioning, not
+       wording. The line opened "We design websites and build the tools behind
+       growing businesses", which put the most crowded and most price shopped
+       thing we sell in the first four words, directly under a headline about
+       turning a process into a system. A visitor categorises a company from
+       that sentence. Websites stay in it, because we sell them, but they
+       belong at the end where they read as part of a system. The same order
+       has to hold in the strip underneath, or the two contradict each other. */
+    check('the hero does not open by selling websites',
+      !/^we design websites/i.test(r.heroCopy) && !/^websites/i.test(r.heroCopy.trim()), r.heroCopy);
+    check('the hero still names the tools before the websites',
+      r.heroCopy.toLowerCase().indexOf('tools') < r.heroCopy.toLowerCase().indexOf('website'), r.heroCopy);
+    check('websites are still offered, just not first',
+      /website/i.test(r.heroCopy), r.heroCopy);
+    check('the service strip leads with the same thing the sentence does',
+      !/website/i.test(r.heroServicesFirst), r.heroServicesFirst);
     check('hero copy still offers website work',
       /website/i.test(r.bodyText.slice(0, 900)), r.bodyText.slice(0, 160));
     check('hero names the service routes',
@@ -630,7 +649,7 @@ function serve() {
        read separately. A visual separator is not a substitute for one in the
        text, so this checks the text, not the pixels. */
     check('the service labels are separated in the text, not only on screen',
-      !/WebsitesCRM|systemsPortals|PortalsAutomation/i.test(r.heroServicesText),
+      !/[a-z][A-Z]/.test(r.heroServicesText.replace(/\s+/g, ' ').trim()),
       r.heroServicesText);
     check('the services are marked up as a list',
       r.heroServicesTag === 'UL' && r.heroServicesCount === 5,
