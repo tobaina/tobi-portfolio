@@ -14,7 +14,13 @@
    Neither is ever sent to the browser.
    ========================================================================== */
 
-const TO = "tobaina@gmail.com";
+/* ⚠️  THIS WAS A PERSONAL GMAIL ADDRESS UNTIL THE DOMAIN HAD MAIL.
+   Every enquiry for work quoted in four figures landed in a personal inbox,
+   and the fallback copy below could not name an address because there was no
+   business one to name. getpolisha.com now has MX, SPF, DKIM and DMARC, and
+   this mailbox is answered by more than one person, so an enquiry no longer
+   depends on one individual reading it. */
+const TO = "hello@getpolisha.com";
 
 /* --------------------------------------------------------------------------
    ONE LIST, NOT THREE
@@ -207,15 +213,17 @@ module.exports = async function handler(req, res) {
     // Loud in the log, vague to the visitor -- configuration problems are
     // not the visitor's business.
     //
-    // ⚠️  NO ADDRESS IN THIS MESSAGE. It used to name the inbox directly,
-    // which republished a personal address to every visitor who hit a
-    // misconfigured form. The page no longer shows an address anywhere, so
-    // the fallback points at a route that does exist. When a business
-    // address is chosen, name it here and in the two messages below.
+    // ⚠️  THE ADDRESS IS BACK IN THIS MESSAGE, AND ONLY BECAUSE IT IS NOW A
+    // BUSINESS ONE. It named a personal inbox once, which republished a
+    // private address to every visitor who hit a misconfigured form, so it
+    // was replaced by a pointer at the LinkedIn link. That pointer was always
+    // the weaker answer: a company page cannot be messaged by the public. A
+    // visitor whose message just failed needs somewhere to send it, and
+    // hello@getpolisha.com is somewhere.
     console.error("[contact] RESEND_API_KEY or EMAIL_FROM is not configured.");
     return res.status(503).json({
       ok: false,
-      error: "The form is not available right now. Please reach us through the LinkedIn link on this page.",
+      error: "The form is not available right now. Please email us at hello@getpolisha.com and we will pick it up from there.",
     });
   }
 
@@ -224,7 +232,7 @@ module.exports = async function handler(req, res) {
   const listOutcome = subscribe ? await addToMarketingList(email, key) : "not_requested";
 
   const text =
-    "New enquiry from tobi.getpolisha.com\n\n" +
+    "New enquiry from systems.getpolisha.com\n\n" +
     "Name:  " + name + "\n" +
     "Email: " + email + "\n" +
     "Phone: " + (phone || "Not given") + "\n" +
@@ -255,14 +263,14 @@ module.exports = async function handler(req, res) {
       console.error("[contact] Resend refused the message:", response.status, detail);
       return res.status(502).json({
         ok: false,
-        error: "The message could not be sent. Please reach us through the LinkedIn link on this page.",
+        error: "The message could not be sent. Please email us at hello@getpolisha.com and we will pick it up from there.",
       });
     }
   } catch (error) {
     console.error("[contact] Could not reach Resend:", error && error.message);
     return res.status(502).json({
       ok: false,
-      error: "The message could not be sent. Please reach us through the LinkedIn link on this page.",
+      error: "The message could not be sent. Please email us at hello@getpolisha.com and we will pick it up from there.",
     });
   }
 

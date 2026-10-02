@@ -23,7 +23,12 @@ const path = require("path");
 const audit = require(path.join(__dirname, "..", "audit-score.js"));
 const { addToMarketingList } = require("./_marketing.js");
 
-const TO = "tobaina@gmail.com";
+/* ⚠️  THE LEAD NOTIFICATION GOES TO THE BUSINESS MAILBOX, NOT A PERSON.
+   This is the audit's only purpose: the visitor's own copy is the product,
+   this is the enquiry. It sat on a personal Gmail alongside contact.js, and
+   both moved the day getpolisha.com got mail. Keep the two the same: a lead
+   that arrives in one inbox and not the other is a lead someone loses. */
+const TO = "hello@getpolisha.com";
 const LIMITS = { name: 100, email: 254 };
 
 const RATE_WINDOW_MS = 60 * 1000;
