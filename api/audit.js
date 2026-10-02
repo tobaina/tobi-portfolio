@@ -22,6 +22,7 @@
 const path = require("path");
 const audit = require(path.join(__dirname, "..", "audit-score.js"));
 const { addToMarketingList } = require("./_marketing.js");
+const { senderFrom } = require("./_sender.js");
 
 /* ⚠️  THE LEAD NOTIFICATION GOES TO THE BUSINESS MAILBOX, NOT A PERSON.
    This is the audit's only purpose: the visitor's own copy is the product,
@@ -156,7 +157,9 @@ module.exports = async function handler(req, res) {
   const mismatch = claimed !== null && Math.abs(claimed - result.hours) > 0.6;
 
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  /* The address comes from the environment, the name never does. See
+     api/_sender.js for why. */
+  const from = senderFrom(process.env.EMAIL_FROM);
   if (!key || !from) {
     console.error("[audit] Missing RESEND_API_KEY or EMAIL_FROM.");
     return res.status(500).json({ ok: false, error: "Could not send just now." });

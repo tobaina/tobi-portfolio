@@ -20,6 +20,8 @@
    business one to name. getpolisha.com now has MX, SPF, DKIM and DMARC, and
    this mailbox is answered by more than one person, so an enquiry no longer
    depends on one individual reading it. */
+const { senderFrom } = require("./_sender.js");
+
 const TO = "hello@getpolisha.com";
 
 /* --------------------------------------------------------------------------
@@ -207,7 +209,9 @@ module.exports = async function handler(req, res) {
   }
 
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  /* The address comes from the environment, the name never does. See
+     api/_sender.js for why. */
+  const from = senderFrom(process.env.EMAIL_FROM);
 
   if (!key || !from) {
     // Loud in the log, vague to the visitor -- configuration problems are
