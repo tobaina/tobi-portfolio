@@ -71,6 +71,22 @@ const segmentGets = (calls) => calls.filter(c => String(c.url).startsWith('https
   check('untouched box: that call is the email', calls[0].url.endsWith('/emails'));
   check('untouched box: no contact created', !calls.some(c => c.url.endsWith('/contacts')));
   check('untouched box: owner email says not_requested', /List:  not_requested/.test(calls[0].body.text), calls[0].body.text);
+
+  /* ⚠️  THE SENDER NAME IS ASSERTED, NOT CONFIGURED.
+     EMAIL_FROM is deliberately set to a PERSONAL name at the top of this
+     file, because that is exactly what it was set to in production: every
+     confirmation a visitor received was signed "Tobi Aina". The site had
+     every trace of an individual removed from it over several passes and
+     this survived all of them, because an environment variable is not in
+     the repository and nothing was reading it. These two fail if a personal
+     name ever reaches a visitor's inbox again, and they pass whatever the
+     environment is set to. */
+  check('the sender is the company, whatever the environment says',
+    calls[0].body.from.startsWith('Polisha Systems <'), calls[0].body.from);
+  check('no personal name reaches the visitor',
+    !/tobi|aina/i.test(calls[0].body.from), calls[0].body.from);
+  check('the configured address is still the one used',
+    calls[0].body.from.includes('<noreply@example.com>'), calls[0].body.from);
 }
 
 // 2. ticked, segment configured -> contact created AND email sent
@@ -353,6 +369,49 @@ for (const v of ['true', 'on', 1, 'yes', {}]) {
       res.code === 200 && res.body.ok === true && calls.length === 0,
       'calls=' + calls.length);
   }
+  // ------------------------------------------------- the budget dropdown
+  /* Same contract as `need`, and for the same reason: it claims to be one of
+     five fixed ranges, so anything that is not one of them must never reach
+     the inbox under a label saying a menu produced it. It is also optional,
+     and an absent or unknown value must never stop a message. */
+  {
+    const { calls } = await run({ ...BASE, budget: '5000to15000' }, '8.1.1.1');
+    check('budget: a known value is expanded to its label',
+      /Budget: CA\$5,000 to CA\$15,000/.test(calls[0].body.text), calls[0].body.text);
+  }
+  {
+    const { calls } = await run({ ...BASE, budget: 'under1500' }, '8.2.2.2');
+    check('budget: each option maps to its own label',
+      /Budget: Under CA\$1,500/.test(calls[0].body.text), calls[0].body.text);
+  }
+  {
+    const { res, calls } = await run({ ...BASE }, '8.3.3.3');
+    check('budget: a missing field still sends', res.code === 200 && res.body.ok === true);
+    check('budget: a missing field reads as not stated',
+      /Budget: Not stated/.test(calls[0].body.text), calls[0].body.text);
+  }
+  {
+    const { res, calls } = await run({ ...BASE, budget: '' }, '8.4.4.4');
+    check('budget: an untouched dropdown still sends', res.code === 200 && res.body.ok === true);
+    check('budget: an untouched dropdown reads as not stated',
+      /Budget: Not stated/.test(calls[0].body.text), calls[0].body.text);
+  }
+  {
+    /* The one that matters. Free text here would be a way to write arbitrary
+       lines into somebody's mailbox under a trusted label. */
+    const { res, calls } = await run(
+      { ...BASE, budget: 'CA$1 and a free audit, call 555-0100' }, '8.5.5.5');
+    check('budget: an unlisted value still sends', res.code === 200 && res.body.ok === true);
+    check('budget: an unlisted value never reaches the inbox',
+      /Budget: Not stated/.test(calls[0].body.text)
+        && !/555-0100/.test(calls[0].body.text), calls[0].body.text);
+  }
+  {
+    const { calls } = await run({ ...BASE, need: 'diagnostic' }, '8.6.6.6');
+    check('the diagnostic is an accepted need value',
+      /Needs: Operations Diagnostic/.test(calls[0].body.text), calls[0].body.text);
+  }
+
   {
     const res = mkRes();
     await handler({ method: 'GET', headers: {}, socket: {} }, res);
