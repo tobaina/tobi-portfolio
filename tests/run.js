@@ -269,9 +269,9 @@ function serve() {
                    .every(i => !!i.getAttribute('aria-describedby')),
       live: !!document.querySelector('#cf-status[aria-live]'),
     }));
-    check('empty submit raises an error per field', v.errors === 3, 'got ' + v.errors);
+    check('empty submit raises an error per field', v.errors === 4, 'got ' + v.errors);
     check('error messages are plain language', v.messages.every(m => /please|would help|does not look/i.test(m)), JSON.stringify(v.messages));
-    check('invalid fields marked with aria-invalid', v.invalid.length === 3);
+    check('invalid fields marked with aria-invalid', v.invalid.length === 4, JSON.stringify(v.invalid));
     check('focus moves to the first invalid field', v.focused === 'cf-name', 'focus on ' + v.focused);
     check('errors are tied to their field for screen readers', v.described);
     check('status region announces politely', v.live);
@@ -279,6 +279,7 @@ function serve() {
     await page.fill('#cf-email', 'not-an-email');
     await page.fill('#cf-name', 'Test');
     await page.fill('#cf-message', 'short');
+    await page.selectOption('#cf-need', 'system');
     await page.click('#cf-submit');
     await page.waitForTimeout(300);
     check('bad email is caught', await page.evaluate(() => !document.getElementById('cf-email-error').hidden));
@@ -298,6 +299,7 @@ function serve() {
     await page.fill('#cf-name', 'Test Person');
     await page.fill('#cf-email', 'someone@example.com');
     await page.fill('#cf-message', 'Our approvals live in WhatsApp and we keep losing them.');
+    await page.selectOption('#cf-need', 'system');
     await page.click('#cf-submit');
     await page.waitForTimeout(700);
     const ok = await page.evaluate(() => ({
@@ -319,6 +321,7 @@ function serve() {
     await page.goto(BASE, { waitUntil: 'networkidle' });
     const typed = 'This message must survive a failure.';
     await page.fill('#cf-name', 'Test'); await page.fill('#cf-email', 'a@b.co'); await page.fill('#cf-message', typed);
+    await page.selectOption('#cf-need', 'system');
     await page.click('#cf-submit');
     await page.waitForTimeout(700);
     const bad = await page.evaluate(t => ({
@@ -430,6 +433,7 @@ function serve() {
     await page.fill('#cf-name', 'Test Person');
     await page.fill('#cf-email', 'test@example.com');
     await page.fill('#cf-message', 'Something in my operation is breaking every week.');
+    await page.selectOption('#cf-need', 'system');
     await page.click('#cf-submit');
     await page.waitForTimeout(600);
     check('an untouched box sends subscribe:false',
@@ -440,6 +444,7 @@ function serve() {
     await page.fill('#cf-name', 'Test Person');
     await page.fill('#cf-email', 'test@example.com');
     await page.fill('#cf-message', 'Something in my operation is breaking every week.');
+    await page.selectOption('#cf-need', 'system');
     await page.check('#cf-subscribe');
     await page.click('#cf-submit');
     await page.waitForTimeout(600);
@@ -1061,8 +1066,14 @@ function serve() {
 
     check('the enquiry names a routing field', r.present);
     check('the routing field has a real label', r.labelled);
-    // Somebody who does not know what they need must still be able to send.
-    check('the routing field is optional', r.present && !r.required);
+    /* It must be answered, because an enquiry with no category on it is one
+       nobody can route, and because an unmarked field that is not enforced
+       reads as a bug to whoever filled it in. Nobody is turned away by this:
+       "Not sure yet" is in the list and costs one click, which is what the
+       next two checks hold in place. The server is deliberately softer than
+       the form and still accepts an absent choice as "Not stated", because
+       an enquiry lost is worse than one filed under the wrong heading. */
+    check('the routing field must be answered', r.present && r.required);
     check('the routing field starts unanswered', r.defaultValue === '', String(r.defaultValue));
     check('the routing field offers a "not sure" answer', r.hasUnsure);
     /* ⚠️  THIS ASSERTS THE PROPERTY, NOT A PHRASE.
