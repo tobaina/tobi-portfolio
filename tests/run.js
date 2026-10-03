@@ -578,23 +578,27 @@ function serve() {
        set of amounts is pinned instead: add a price here only at the moment
        you add it to the page AND to the offer catalogue in the structured
        data, which the next assertion cross-checks. */
-    const ALLOWED_PRICES = ['CA$400', 'CA$1,200', 'CA$4,800', 'CA$120', 'CA$450'];
+    const ALLOWED_PRICES = ['CA$1,200', 'CA$4,800', 'CA$120', 'CA$450'];
     const amounts = r.pricedText.match(/CA\$[\d,]+/g) || [];
     const unapproved = [...new Set(amounts)].filter(a => !ALLOWED_PRICES.includes(a));
     check('every money figure on the page is one we decided on',
       unapproved.length === 0, unapproved.join(' '));
     check('the two build floors are still stated',
       amounts.includes('CA$1,200') && amounts.includes('CA$4,800'), amounts.join(' '));
-    /* ⚠️  CA$400 IS NOW AN ANCHOR, NOT A PRICE. The diagnostic is free while
-       we take on our first clients. Naming what it normally costs is what
-       stops "free" reading as a sales call, so the figure must stay AND the
-       word free must stay. Remove either and the offer loses its meaning. */
-    check('the diagnostic still names what it normally costs',
-      amounts.includes('CA$400'), amounts.join(' '));
+    /* ⚠️  INVERTED 3 OCTOBER. CA$400 used to be required here as the anchor
+       behind the word free. The owner replaced the wording and the figure is
+       gone from the page and from the structured data together. It is pinned
+       as ABSENT rather than quietly dropped, so it cannot creep back from an
+       older copy into one place and not the other.
+
+       What still must not go is the REASON. A price of nothing with no reason
+       attached reads as a sales call, which is the one thing that section
+       exists to say it is not. */
+    check('the anchor price is gone from the page, not half gone',
+      !amounts.includes('CA$400'), amounts.join(' '));
     check('the diagnostic is offered free',
-      /free/i.test(r.diagnosticText) && /normally/i.test(r.diagnosticText),
-      r.diagnosticText.slice(0, 200));
-    check('the reason it is free is stated, not just the price',
+      /free/i.test(r.diagnosticText), r.diagnosticText.slice(0, 200));
+    check('the reason it is free is stated, not just the word free',
       /first clients/i.test(r.diagnosticText), r.diagnosticText.slice(0, 200));
     check('all three support tiers are priced',
       ['CA$120', 'CA$450', 'CA$1,200'].every(a => amounts.includes(a)), amounts.join(' '));
@@ -606,13 +610,10 @@ function serve() {
        in the catalogue, and the catalogue must publish nothing extra. */
     const ldPrices = (r.ld.match(/"price": ?"(\d+)"/g) || [])
       .map(m => 'CA$' + Number(m.replace(/\D/g, '')).toLocaleString('en-CA'));
-    /* ⚠️  THE DIAGNOSTIC IS THE ONE OFFER WHOSE TWO FIGURES DIFFER ON
-       PURPOSE. Its price in the catalogue is 0, because that is what it
-       actually costs right now, while the page shows CA$400 as the anchor for
-       what it normally costs. Both are true and neither should be changed to
-       match the other, so it is excluded from the cross-check and asserted on
-       its own below. Every other price must still agree in both directions. */
-    const vis = [...new Set(amounts)].filter(a => a !== 'CA$400');
+    /* The diagnostic publishes a price of 0 in the catalogue and no figure at
+       all on the page, which agree: it is free. Only CA$0 is carved out of
+       the cross-check. Every other price must agree in both directions. */
+    const vis = [...new Set(amounts)];
     const cat = ldPrices.filter(a => a !== 'CA$0');
     check('every visible price appears in the offer catalogue',
       vis.every(a => cat.includes(a)),
@@ -824,7 +825,9 @@ function serve() {
       const card = document.querySelector('.offer-card');
       return {
         present: !!document.getElementById('diagnostic'),
-        price: t(document.querySelector('.offer-head strong')),
+        heading: t(document.querySelector('.offer-head h3')),
+        priceBadge: t(document.querySelector('.offer-head strong')),
+        lead: t(document.querySelector('.offer-lead')),
         deliverables: document.querySelectorAll('.offer-list li').length,
         terms: t(document.querySelector('.offer-terms')),
         guarantee: t(document.querySelector('.offer-guarantee')),
@@ -838,14 +841,20 @@ function serve() {
     });
 
     check('the diagnostic section exists', o.present);
-    /* ⚠️  INVERTED. This required a price of CA$400 in the heading. The
-       diagnostic is free while we take on our first clients, so the heading
-       must say so. The CA$400 did not disappear, it moved into the terms line
-       underneath as the anchor, and the assertion for that is in the pricing
-       block above. */
-    check('the diagnostic heading says it is free', /free/i.test(o.price), o.price);
-    check('no price sits in the diagnostic heading any more',
-      !/CA\$/.test(o.price), o.price);
+    /* ⚠️  THE HEADING CARRIES THE PRICE NOW, AND THERE IS NO BADGE.
+       It used to be "Operations Diagnostic" with a separate "Free" beside it.
+       The approved wording puts the word in the heading, so the badge was
+       removed: showing "Free" twice in one row read as a mistake. If a badge
+       is ever restored, the heading has to drop the word in the same edit. */
+    check('the diagnostic heading names the offer and its price',
+      o.heading === 'Free Operations Diagnostic', o.heading);
+    check('the price is not also repeated in a badge beside it',
+      o.priceBadge === '', o.priceBadge);
+    check('no figure sits in the diagnostic heading',
+      !/CA\$/.test(o.heading), o.heading);
+    check('the lead says what the session actually produces',
+      /map how your process works today/i.test(o.lead)
+        && /written recommendation you can keep/i.test(o.lead), o.lead);
     check('it lists what the client actually receives',
       o.deliverables === 6, String(o.deliverables));
     /* ⚠️  ALSO INVERTED, AND FOR A REASON THAT IS EASY TO MISS. The terms
@@ -857,9 +866,10 @@ function serve() {
        reading as a sales call. */
     check('the credit promise is gone, because there is nothing to credit',
       !/credited in full/i.test(o.terms), o.terms);
-    check('the terms say what it normally costs and why it is free now',
-      /normally/i.test(o.terms) && /CA\$400/.test(o.terms) && /first clients/i.test(o.terms),
-      o.terms);
+    check('the terms say it is free and why',
+      /currently free/i.test(o.terms) && /first clients/i.test(o.terms), o.terms);
+    check('the terms carry no price figure',
+      !/CA\$/.test(o.terms), o.terms);
 
     /* ⚠️  THE GUARANTEE AND THE BOUNDARIES BLOCK WERE BOTH REMOVED, ON PURPOSE.
 
@@ -890,8 +900,16 @@ function serve() {
     check('no guarantee is published',
       !/you pay nothing|hours a week of recoverable/i.test(o.cardText),
       o.cardText.slice(0, 200));
-    check('scarcity is stated honestly rather than as urgency',
-      /two a month/i.test(o.terms), o.terms);
+    /* ⚠️  INVERTED 3 OCTOBER. This required "two a month", which was true and
+       was the honest form of scarcity. The owner replaced it with a statement
+       about calendar availability. What the check defends is unchanged: the
+       limit is described as a fact about us, never as pressure on the reader.
+       No countdown, no "only N left", no deadline. */
+    check('availability is stated as a fact, not as pressure',
+      /availability is based on our team's calendar/i.test(o.terms), o.terms);
+    check('no urgency language anywhere in the offer',
+      !/hurry|act now|limited time|only \d+ (left|remaining|spots?)|expires?|don't miss|last chance/i
+        .test(o.cardText), o.cardText.slice(0, 200));
     check('the boundaries panel is gone', !o.hasBoundaries);
     /* The framing, not just the word. "Stay human" and "in the loop" both
        imply something else is otherwise doing the work. */
