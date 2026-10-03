@@ -986,8 +986,27 @@ function serve() {
     check('the founding offer is a trade rather than a discount',
       /case study/i.test(t.founding) && !/% off|discount/i.test(t.founding),
       t.founding.slice(0, 200));
-    check('the founding offer states real capacity',
-      /two new builds a month/i.test(t.founding), t.founding.slice(0, 220));
+    /* ⚠️  INVERTED 3 OCTOBER. This required "two new builds a month". That
+       count was true when it was written, because there were two of us, and
+       the point of the check was that a scarcity claim had to be one we could
+       stand behind. The team has grown, the number stopped being true, and it
+       came off on the owner's instruction.
+
+       The check is inverted rather than deleted, so a restored count fails
+       instead of passing quietly. A fixed monthly figure is a commitment made
+       before anyone has looked at the work: the month it is wrong we either
+       turn away a client we could have taken or accept one we cannot deliver
+       for. What the assertion defends is unchanged, only sharper. Capacity is
+       still named, and it is still a claim we can stand behind, because it
+       describes how we decide rather than promising a number in advance. */
+    check('the founding offer promises no fixed number of builds',
+      !/\b(two|three|four|2|3|4)\s+(new\s+)?(builds?|projects?|clients?)\s+a\s+month\b/i
+        .test(t.founding), t.founding.slice(0, 220));
+    check('the founding offer still names how capacity is decided',
+      /team capacity/i.test(t.founding), t.founding.slice(0, 220));
+    check('the founding offer promises no date before the work is understood',
+      /confirm delivery timelines before work begins/i.test(t.founding),
+      t.founding.slice(0, 220));
 
     await ctx.close();
   }
