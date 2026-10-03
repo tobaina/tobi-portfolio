@@ -20,6 +20,45 @@
     try { if (window.va) window.va("event", { name: name, data: props || {} }); } catch (e) {}
   };
 
+  /* The visitor's last interaction decides how a single-choice question
+     behaves, because the two kinds of visitor need opposite things.
+
+     A pointer user wants to tap an answer and move on, so the step advances
+     by itself and there is no Next button underneath to catch a second
+     click. That button was the fault: the step advanced, the layout shifted,
+     and a click aimed at Next landed on an option of the question that had
+     just appeared, so an answer nobody chose was carried into the score.
+
+     A keyboard user arrowing down a radio group changes the selection on
+     every press. Advancing on the first press would make the options
+     impossible to read, so for them nothing auto-advances and the Next
+     button is shown to press. */
+  var keyboardMode = false;
+
+  function syncNextButton() {
+    el("audit-next").hidden = !Q[step].multi && !keyboardMode;
+  }
+
+  /* After the step changes, ignore pointer input on the new options for a
+     moment, so a second click or a double click cannot answer a question the
+     visitor has not read yet. The keyboard is left alone. */
+  function lockOptionsBriefly() {
+    optionsBox.style.pointerEvents = "none";
+    window.setTimeout(function () { optionsBox.style.pointerEvents = ""; }, 450);
+  }
+
+  optionsBox.addEventListener("pointerdown", function () {
+    keyboardMode = false;
+    syncNextButton();
+  });
+  optionsBox.addEventListener("keydown", function (e) {
+    var k = e.key || "";
+    if (k.indexOf("Arrow") === 0 || k === " " || k === "Spacebar" || k === "Tab") {
+      keyboardMode = true;
+      syncNextButton();
+    }
+  });
+
   /* ---------------------------------------------------------- rendering */
   function renderStep() {
     var q = Q[step];
@@ -33,6 +72,7 @@
     el("audit-next").innerHTML = step === Q.length - 1
       ? 'See my result <span class="arrow" aria-hidden="true">&rarr;</span>'
       : 'Next <span class="arrow" aria-hidden="true">&rarr;</span>';
+    syncNextButton();
     errorBox.hidden = true;
 
     optionsBox.innerHTML = "";
@@ -79,7 +119,7 @@
         }
         record(q);
         errorBox.hidden = true;
-        if (!q.multi) window.setTimeout(next, 180);
+        if (!q.multi && !keyboardMode) window.setTimeout(next, 180);
       });
       if (i === 0) window.setTimeout(function () { input.focus(); }, 30);
     });
@@ -108,12 +148,14 @@
     if (step === Q.length - 1) { finish(); return; }
     step += 1;
     renderStep();
+    lockOptionsBriefly();
   }
 
   function back() {
     if (step === 0) return;
     step -= 1;
     renderStep();
+    lockOptionsBriefly();
   }
 
   /* ------------------------------------------------------------- result */

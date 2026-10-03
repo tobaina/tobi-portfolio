@@ -99,7 +99,7 @@
   if (form) {
     var status = document.getElementById("cf-status");
     var submit = document.getElementById("cf-submit");
-    var fields = ["name", "email", "message"];
+    var fields = ["name", "email", "message", "need"];
     var started = false;
 
     function showError(field, text) {
@@ -133,18 +133,26 @@
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(values.email)) errors.email = "That email address does not look right.";
       if (!values.message) errors.message = "Please describe what is happening.";
       else if (values.message.length < 10) errors.message = "A sentence or two would help.";
+      /* Checked here rather than left to the browser, because the form
+         carries `novalidate`. Without this, pressing Enter inside a dropdown
+         submits the whole form, and an enquiry arrives with no category on
+         it. "Not sure yet" is in the list, so nobody is stuck. */
+      if (!values.need) errors.need = "Please pick the closest one. Not sure yet is a real answer.";
       return errors;
     }
 
     fields.forEach(function (field) {
       var input = document.getElementById("cf-" + field);
       if (input) {
-        input.addEventListener("input", function () {
+        var clear = function () {
           showError(field, "");
           // Once per visit: the gap between this and a submit is the
           // drop-off worth knowing about.
           if (!started) { started = true; track("contact_form_started"); }
-        });
+        };
+        input.addEventListener("input", clear);
+        // A dropdown does not always report "input" in every browser.
+        if (input.tagName === "SELECT") input.addEventListener("change", clear);
       }
     });
 
@@ -157,9 +165,9 @@
         email: form.elements.email.value.trim(),
         message: form.elements.message.value.trim(),
         company: form.elements.company.value.trim(),
-        // Optional, and never invented here: an untouched dropdown sends "",
-        // which the server reads as "not stated" rather than guessing a
-        // category on the visitor's behalf.
+        // Never invented here. The form asks for a choice and will not send
+        // without one, but if an untouched dropdown ever reaches the server
+        // it is recorded as "not stated" rather than guessed at.
         need: form.elements.need ? form.elements.need.value : "",
         // Sent as a boolean, read from the box itself. Never defaulted to
         // true anywhere in this file, on the server, or in a test fixture.

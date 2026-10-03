@@ -704,16 +704,21 @@
               <p class="field-hint" id="cf-company-hint">If the work is for a business.</p>
             </div>
 
-            <!-- Optional on purpose. It routes the enquiry and it lets a
-                 visitor recognise their own job in the list, but somebody who
-                 genuinely does not know yet must not be stopped by a required
-                 dropdown -- hence the last option, and no `required`. The
-                 server accepts only these exact values and ignores anything
-                 else, so a hand-crafted POST cannot put text of its own
-                 choosing into our inbox. -->
+            <!-- Asked for, and answerable by everyone. It routes the enquiry
+                 and it lets a visitor recognise their own job in the list.
+                 Nobody is turned away for not knowing, because "Not sure yet"
+                 is a real answer that costs one click -- which is why this can
+                 be required without losing the people a diagnostic helps most.
+                 It is the form that insists, not the server: api/contact.js
+                 still records an absent choice as "Not stated" and sends the
+                 enquiry anyway, because an enquiry lost is worse than an
+                 enquiry filed under the wrong heading. The server accepts only
+                 these exact values and ignores anything else, so a
+                 hand-crafted POST cannot put text of its own choosing into our
+                 inbox. -->
             <div class="field">
               <label for="cf-need">What do you need help with?</label>
-              <select id="cf-need" name="need">
+              <select id="cf-need" name="need" required aria-describedby="cf-need-error">
                 <option value="" selected>Choose one</option>
                 <option value="diagnostic">Operations Diagnostic (free)</option>
                 <option value="website">Website or landing page</option>
@@ -722,6 +727,7 @@
                 <option value="automation">Automation</option>
                 <option value="unsure">Not sure yet</option>
               </select>
+              <p class="field-error" id="cf-need-error" hidden></p>
             </div>
 
             <!-- Optional on purpose. A required budget field on a first
