@@ -91,7 +91,7 @@
             "itemOffered": {
               "@type": "Service",
               "name": "Operations Diagnostic",
-              "description": "A working session across your whole process and a written document you keep. Normally CA$400 and free while we are taking on our first clients."
+              "description": "We map how your process works today, identify the bottlenecks, show you what should change and what should stay, and give you a written recommendation you can keep. Currently free while we work with our first clients."
             }
           },
           {
@@ -398,11 +398,14 @@
 
       <div class="offer-grid">
         <div class="offer-card">
+          <!-- The heading states the price, so the separate price badge that
+               used to sit on the right has gone. Carrying "Free" twice, once
+               in the heading and once beside it, read as a mistake rather
+               than as emphasis. -->
           <div class="offer-head">
-            <h3>Operations Diagnostic</h3>
-            <strong>Free</strong>
+            <h3>Free Operations Diagnostic</h3>
           </div>
-          <p class="offer-lead">A working session across your whole process, and a written document you keep.</p>
+          <p class="offer-lead">We will map how your process works today, identify the bottlenecks, show you what should change and what should stay, and give you a written recommendation you can keep.</p>
           <ul class="offer-list">
             <li><i aria-hidden="true">&#10003;</i><span>A map of how your work runs today</span></li>
             <li><i aria-hidden="true">&#10003;</i><span>The bottlenecks and the repeated work we found</span></li>
@@ -413,11 +416,18 @@
           </ul>
           <!-- ⚠️  FREE, AND THE REASON IS STATED. A price of nothing with no
                reason attached reads as a sales call, which is the one thing
-               this section exists to say it is not. Naming what it normally
-               costs is the anchor, and naming why it is free right now is the
-               honesty. Both have to stay or the offer loses its meaning.
-               "Two a month" is true: there are two of us. -->
-          <p class="offer-terms">Normally <b>CA$400</b>. Free while we are taking on our first clients, and we take on two a month.</p>
+               this section exists to say it is not. The reason has to stay.
+
+               WHAT CHANGED, 3 October: this line used to read "Normally
+               CA$400 ... and we take on two a month". Both the anchor and the
+               count were removed on the owner's instruction, and this is the
+               approved wording. Do not restore CA$400 here from an older
+               copy of the page or from the structured data: the figure no
+               longer appears anywhere on the site, and a price that appears
+               in one place and not the other is worse than neither. If the
+               anchor is ever wanted back it goes back in both places at once,
+               and tests/run.js pins that. -->
+          <p class="offer-terms">Currently free while we work with our first clients. Availability is based on our team's calendar.</p>
           <a class="button primary" href="#contact" data-need="diagnostic" data-track="offer_diagnostic">Book the free diagnostic <span class="arrow" aria-hidden="true">&rarr;</span></a>
           <p class="offer-alt">No call is required to start. The <a href="/audit" data-track="offer_audit">free workflow audit</a> answers twelve questions and gives you a figure in about six minutes.</p>
         </div>

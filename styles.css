@@ -630,7 +630,11 @@ section { padding: 88px 0; }
 }
 .offer-head h3 { margin: 0; font-size: 25px; letter-spacing: -.03em; }
 .offer-head strong { font-size: 27px; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
-.offer-lead { margin: 15px 0 18px; color: var(--body); font-size: 15px; }
+/* The lead runs the full width of the card, which is the widest column on
+   the page. Left alone it set about 110 characters to the line, well past
+   the point where the eye loses its place returning to the left edge. 64ch
+   matches what the section copy and the hero already use. */
+.offer-lead { margin: 15px 0 18px; color: var(--body); font-size: 15px; max-width: 64ch; }
 .offer-list { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 26px; margin: 0 0 18px; padding: 0; list-style: none; }
 .offer-list li { display: grid; grid-template-columns: 19px 1fr; gap: 9px; align-items: start; }
 .offer-list i {
